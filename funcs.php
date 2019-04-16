@@ -4,6 +4,11 @@ define("PHORMER_BUILD_DATE", "13th Jan. 2007");
 define("DEBUG_MODE", 0);
 #define("ZIP_OPEN_PATH", 'n:\aideen\php\phormer\temp\\'); // DO NOT FORGET FINAL \ (or /) of (temp\)
 
+if( ! ini_get('date.timezone') )
+{
+    date_default_timezone_set('America/Los_Angeles');
+}
+
 $thumbCntArr = array(5, 10, 20, 50, 100);
 
 $pathadd = pathinfo($_SERVER['PHP_SELF']);
@@ -232,7 +237,7 @@ function textDirectionEn($txt){
 		$l = $txt[$i];
 		$en &= ctype_lower($l) || ctype_upper($l) || ctype_punct($l) || ctype_digit($l) ||
 			   ctype_space($l) || (strpos("/\\!@#$%^&*(){}[];\"'", $l) != FALSE ||
-			   strpos("ÿşıüûúùöõôóòñğïíîìëêéèçæåäãâáàİÜÛÚÙÖÕÔÓÒÑÏÎÍÌËÊÉÇÈÆÅÄÃÂÁ", $l) != FALSE ); #'
+			   strpos("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½", $l) != FALSE ); #'
 	}
 	return $en;
 }
