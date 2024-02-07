@@ -800,9 +800,9 @@ if (page_is('basis') || page_is('configs')) {
 					while (NULL !== array_pop($basis['links']));
 					for ($i=0; $i<$_POST['nLink']; $i++)
 						array_push($basis['links'],
-							array('name'  => $_POST["l${i}n"],
-								  'href'  => $_POST["l${i}h"],
-								  'title' => $_POST["l${i}t"]));
+							array('name'  => $_POST["l{$i}n"],
+								  'href'  => $_POST["l{$i}h"],
+								  'title' => $_POST["l{$i}t"]));
 				}
 
 				save_container('basis', 'Basis', 'data/basis.xml');
@@ -985,7 +985,7 @@ if (page_is('basis')) {
 <?php
 	$n = 0;
 	reset($basis['links']);
-	while (list($key, $val) = each($basis['links']))
+	foreach ($basis['links'] as $key => $val)
 		writeLinkLine($n++, $val);
 	reset($basis['links']);
 ?>
@@ -1528,7 +1528,7 @@ if (page_is('drafts')) { ?>
 				reset($_POST);
 				echo $ok_l;
 				$writtenBefore = false;
-				while (list($key, $val) = each($_POST))
+				foreach ($_POST as $key => $val)
 					if ((strcmp($val, "on") == 0) && (strcmp(substr($key, 0, 4), "d_cb") == 0)) {
 						$draft = rawurldecode(substr($key, 4));
 						if ($writtenBefore)
@@ -1543,7 +1543,7 @@ if (page_is('drafts')) { ?>
 				reset($_POST);
 				echo $ok_l;
 				# print_r($_POST);
-				while (list($key, $val) = each($_POST))
+				foreach ($_POST as $key => $val)
 					if ((strcmp($val, "on") == 0) && (strcmp(substr($key, 0, 4), "d_cb") == 0)) {
 						$draft = substr($key, 4);
 						$vv = $_POST['d_vv'.$draft];
@@ -1666,7 +1666,7 @@ if (page_is('drafts')) { ?>
 														<?php
 															$categs2 = $categs;
 															reset($categs2);
-															while (list($cid, $cvals) = each($categs2))
+															foreach ($categs2 as $cid => $cvals)
 																if (is_array($cvals)) {
 																	$prv = (strlen($cvals['pass']))?'* ':'';
 																	echo "\t\t\t\t\t\t\t\t<option value=\"$cid\">".$cid.": ".$prv.cutNeck($cvals['name'])."</option>\n";
@@ -1686,7 +1686,7 @@ if (page_is('drafts')) { ?>
 															array_pop($stories2);
 															$stories2 = array(1 => $stories[1]) + $stories2;
 															reset($stories2);
-															while (list($sid, $svals) = each($stories2))
+															foreach ($stories2 as $sid => $svals)
 																if (is_array($svals)) {
 																	$prv = (strlen($svals['pass']))?'* ':'';
 																	echo "\t\t\t\t\t\t\t\t<option ".($sel?"selected=\"selected\"":"")."value=\"$sid\">".$sid.": ".$prv.cutNeck($svals['name'])."</option>\n";
@@ -1982,8 +1982,9 @@ if (page_is('drafts')) { ?>
 		$cmntsPrev = "yes";
 		if (photo_exists($lastp)) {
 			$dates = sscanf(getPhotoInfo($lastp, 'dateadd'), "%d/%d/%d %d:%d");
-				$dif = 0;
-				@ eval('$dif = '.$basis['timediffer'].';');
+				$dif = 0;		
+				if (isset($basis['timediffer']))
+					@ eval('$dif = '.$basis['timediffer'].';');
 				$d = time() + $dif*60;
 			if ($d - mktime($dates[3], $dates[4], 0, $dates[1], $dates[2], $dates[0])
 				< 60*60) // added within last one hour
@@ -2263,7 +2264,7 @@ if (page_is('drafts')) { ?>
 													<?php
 														$categs2 = $categs;
 														reset($categs2);
-														while (list($cid, $cvals) = each($categs2))
+														foreach ($categs2 as $cid => $cvals)
 															if (is_array($cvals)) {
 																$prv = (strlen($cvals['pass']))?'* ':'';
 																$sel = $edit?($cid == $photo['categ']):($cid == $categPrev);
@@ -2279,7 +2280,7 @@ if (page_is('drafts')) { ?>
 														array_pop($stories2);
 														$stories2 = array(1 => $stories[1]) + $stories2;
 														reset($stories2);
-														while (list($sid, $svals) = each($stories2))
+														foreach ($stories2 as $sid => $svals)
 															if (is_array($svals)) {
 																$prv = (strlen($svals['pass']))?'* ':'';
 																$sel = $edit?($sid == $photo['story']):($sid == $storyPrev);

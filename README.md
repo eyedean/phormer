@@ -16,8 +16,8 @@ address <http://www.gnu.org/licenses/gpl.html>.
  Product URL		http://p.horm.org/er
  Product Description	A PHP (without MySQL) PhotoGallery Manager
  
- Latest Version		3.31
- Release Date 		2007/01/13
+ Latest Version		3.34
+ Release Date 		2024/02/07
 
  Author's Name		Aidin NasiriShargh 
  Author's Email		aideen[at]gmail[dot]com

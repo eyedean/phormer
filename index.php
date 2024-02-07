@@ -75,7 +75,7 @@
 
 	$feat =	(isset($_GET['feat']))?$_GET['feat']:"";
 
-	$QS = $_SERVER['QUERY_STRING'];
+	$QS = $_SERVER['QUERY_STRING'] ?? '';
 	if (($p == -1)	&&	($c == -1)	&&	($s == -1)	&&	($u == -1)	&&	($j == -1) && ($jj == -1)
 		&& (strlen($QS) > 0) && (strpos($QS, "=") === FALSE)) {
 		$u = $QS;
@@ -89,7 +89,7 @@
 
 	if ($u != -1) {
 		reset($categs);
-		while (list($ck, $cv) = each($categs))
+		foreach ($categs as $ck => $cv)
 			if (is_array($cv))
 				if (strcasecmp($cv['name'], $u) == 0) {
 					$c = $ck;
@@ -100,7 +100,7 @@
 	}
 	if ($u != -1) {
 		reset($stories);
-		while (list($ck, $cv) = each($stories))
+		foreach ($stories as $ck => $cv)
 			if (is_array($cv))
 				if (strcasecmp($cv['name'], $u) == 0) {
 					$s = $ck;
@@ -365,7 +365,7 @@
 			$stitle = "<a href=\"$theend\">\"Recent Photos\"</a>";
 		}
 
-		while (list($key, $val) = each($r)) {
+		foreach ($r as $key => $val) {
 			if (!canthumb($val))
 				unset($r[$key]);
 		}
@@ -390,7 +390,7 @@
 		if (count($r) != 0 ) {
 			$r = array_flip($r);
 			reset($r);
-			while (list($key, $val) = each($r)) {
+			foreach ($r as $key => $val) {
 				$r[$key] = getAllPhotoInfo($key);
 				$r[$key]['src'] = PHOTO_PATH.getImageFileName($key, 0);
 				if (!file_exists($r[$key]['src']))
@@ -488,12 +488,15 @@
 				echo "ss_src 	= new Array();\n";
 				echo "ss_desc 	= new Array();\n";
 				reset($r);
-				for ($n=0; list($key, $val) = each($r); $n++)
+				$n = 0;
+				foreach ($r as $key => $val) {
 					echo "\t ss_pid [$n] = '{$key}'; "
 						."\t ss_date[$n] = '{$val['date']}'; "
 						."\t ss_src [$n] = '{$val['src']}'; "
 						."\t ss_ttl [$n] = '".str_replace(array("\n", "'"), array('', '&#039;'), nl2br(strtr($val['name'], $transtable)))."'; "
 						."\t ss_desc[$n] = '".str_replace(array("\n", "'"), array('', '&#039;'), nl2br($val['desc']))."'; \n";
+					$n++;
+				}
 				echo "\t".'ss_update();'."\n";
 				echo "\t".'setTimeout("ss_slideshow()", 10000);'."\n";
 			echo '</script>';
@@ -573,7 +576,7 @@
 			$widthHeight = "";
 			if ($hasgd && file_exists($imgAddress)) {
 				list($width, $height) = getimagesize($imgAddress);
-				$widthHeight = "width=\"${width}px\" height=\"${height}px\" ";
+				$widthHeight = "width=\"{$width}px\" height=\"{$height}px\" ";
 			}
 			$larger = PHOTO_PATH.getImageFileName($p, 9);
 			$haslarger = (file_exists($larger) && (strcasecmp($larger, $imgAddress) != 0));
@@ -725,17 +728,17 @@
 			}
 
 			reset($basis['links']);
-			while (list($key, $val) = each($basis['links'])) {
+			foreach ($basis['links'] as $key => $val) {
 				if (strlen($val['href']) == 0)
 					echo "\t\t\t\t</div>\n"
-						."\t\t\t\t<div class=\"titlepart\"><span class=\"reddot\">&#149;</span>${val['name']}</div>\n"
+						."\t\t\t\t<div class=\"titlepart\"><span class=\"reddot\">&#149;</span>{$val['name']}</div>\n"
 						."\t\t\t\t<div class=\"submenu\">\n";
 				else {
 					foreach ($val as $vkey => $vval) {
 						$val[$vkey] = strtr($vval, $transtable);
 						$val[$vkey] = strtr($vval, $transmanual);
 					}
-					echo "\t\t\t\t\t<div class=\"item\"><span class=\"dot\">&#149;</span><a target=\"$targ\" href=\"${val['href']}\" title=\"${val['title']}\">${val['name']}</a></div>\n";
+					echo "\t\t\t\t\t<div class=\"item\"><span class=\"dot\">&#149;</span><a target=\"$targ\" href=\"{$val['href']}\" title=\"{$val['title']}\">{$val['name']}</a></div>\n";
 				}
 			}
 ?>

@@ -30,8 +30,8 @@ CHANGE LOG:
 	}
 ?>
 <?php
-define("PHORMER_VERSION", "3.31");
-define("PHORMER_BUILD_DATE", "13th Jan. 2007");
+define("PHORMER_VERSION", "3.34");
+define("PHORMER_BUILD_DATE", "February 7th, 2024");
 define("DEBUG_MODE", 0);
 #define("ZIP_OPEN_PATH", 'n:\aideen\php\phormer\temp\\'); // DO NOT FORGET FINAL \ (or /) of (temp\)
 
@@ -46,12 +46,12 @@ while ((strcmp(substr($addadd, -1), '/') == 0) ||
 
 global $_GET, $_POST, $_COOKIE, $hasgd, $hasexif;
 
-if (get_magic_quotes_gpc()) {
-	$_POST = str_replace("\\\"", "\"", $_POST);
-	$_POST = str_replace("\\'", "'", $_POST);
-	$_GET = str_replace("\\\"", "\"", $_GET);
-	$_GET = str_replace("\\'", "'", $_GET);
-}
+// if (get_magic_quotes_gpc()) {
+// 	$_POST = str_replace("\\\"", "\"", $_POST);
+// 	$_POST = str_replace("\\'", "'", $_POST);
+// 	$_GET = str_replace("\\\"", "\"", $_GET);
+// 	$_GET = str_replace("\\'", "'", $_GET);
+// }
 
 $hasgd   = in_array("gd",   get_loaded_extensions())?1:0;
 $haszip  = in_array("zip",  get_loaded_extensions())?1:0;
@@ -307,7 +307,8 @@ function thumbBox($pid, $a_info = "", $force = false, $isInAdmin = false, $targ=
 	$hits = $rating[0];
 	$rate = 0;
 	$raters = substr(strrchr($rating[1], '/'), 1);
-	@eval("@\$rate =".$rating[1].";");
+	if ($raters != "0")
+		@eval("@\$rate =".$rating[1].";");
 	$rate = round($rate, 2);
 	$theName = $photo['name'];
 	$neck = 14;
@@ -475,7 +476,7 @@ function parse_container($parse_infoName, $p_each, $xmlfile, $fix = true) {
 		}
 
 		reset($parse_info);
-		while (list($key,$value) = each($parse_info)) {
+		foreach ($parse_info as $key => $value) {
 			if (is_array($parse_info[$key]) && isset($parse_info[$key][$aval]) && !is_array($parse_info[$key][$aval])) {
 				$parse_info[$key][$aval] = strtr($parse_info[$key][$aval], $transtable);
 				$parse_info[$key][$aval] = strtr($parse_info[$key][$aval], $transmanual);
@@ -513,7 +514,7 @@ function save_container($parse_infoName, $p_each, $xmlfile) {
 		}
 
 		reset($parse_info);
-		while (list($key,$value) = each($parse_info)) {
+		foreach ($parse_info as $key => $value) {
 			if (is_array($parse_info[$key]) && isset($parse_info[$key][$aval]) && !is_array($parse_info[$key][$aval])) {
 				$parse_info[$key][$aval] = htmlspecialchars($parse_info[$key][$aval], ENT_QUOTES, "UTF-8");
 			}
@@ -532,21 +533,21 @@ function save_container($parse_infoName, $p_each, $xmlfile) {
 	$s .= ("<?xml version='1.0' encoding='UTF-8' ?>\n");
 	$s .= ("<Xmldata>\n");
 	reset($parse_info);
-	while (list($key, $value) = each($parse_info)) {
+	foreach ($parse_info as $key => $value) {
 		if (is_array($value)) {
 			if (strcmp($p_each, "Basis") == 0) {
 				reset($parse_info[$key]);
-				while (list($inkey,$invalue) = each($parse_info[$key]))
-					$s .= ("\t<link href=\"${invalue['href']}\" title=\"${invalue['title']}\">${invalue['name']}</link>\n");
+				foreach ($parse_info[$key] as $inkey => $invalue)
+					$s .= ("\t<link href=\"{$invalue['href']}\" title=\"{$invalue['title']}\">{$invalue['name']}</link>\n");
 			}
 			else {
 				$s .= ("\t<".$p_each." id=\"$key\">\n");
 				reset($parse_info[$key]);
-				while (list($inkey,$invalue) = each($parse_info[$key])) {
+				foreach ($parse_info[$key] as $inkey => $invalue) {
 					if (ctype_lower($inkey)) {
 						if (is_array($invalue))
-							while (list($ininkey, $ininvalue) = each($parse_info[$key][$inkey]))
-								$s .= ("\t\t<$inkey><![CDATA[$ininvalue]]></$inkey>\n");
+						foreach ($parse_info[$key][$inkey] as $ininkey => $ininvalue)
+						$s .= ("\t\t<$inkey><![CDATA[$ininvalue]]></$inkey>\n");
 						else
 							$s .= ("\t\t<$inkey><![CDATA[$invalue]]></$inkey>\n");
 					}
@@ -618,9 +619,9 @@ function writeLinkLine($x, $arr = "") {
 	$m = array('n' => 'name', 'h' => 'href', 't' => 'title');
 	reset($m);
 	$bold = (strlen($arr['href']) == 0);
-	echo "\n\t\t<td><input class=\"textW\" style=\"font-weight:".($bold?"bold":"normal").";\" name=\"l${x}n\" id=\"l${x}n\" value=\"${arr['name']}\"></input></td>";
-	echo "\n\t\t<td><input class=\"textW\" onkeyup=\"fixBoldInput($x, this.value);\" onblur=\"fixBoldInput($x, this.value);\" name=\"l${x}h\" id=\"l${x}h\" value=\"${arr['href']}\"></input></td>";
-	echo "\n\t\t<td><input class=\"textW\" name=\"l${x}t\" id=\"l${x}t\" value=\"${arr['title']}\"></input></td>";
+	echo "\n\t\t<td><input class=\"textW\" style=\"font-weight:".($bold?"bold":"normal").";\" name=\"l{$x}n\" id=\"l{$x}n\" value=\"{$arr['name']}\"></input></td>";
+	echo "\n\t\t<td><input class=\"textW\" onkeyup=\"fixBoldInput($x, this.value);\" onblur=\"fixBoldInput($x, this.value);\" name=\"l{$x}h\" id=\"l{$x}h\" value=\"{$arr['href']}\"></input></td>";
+	echo "\n\t\t<td><input class=\"textW\" name=\"l{$x}t\" id=\"l{$x}t\" value=\"{$arr['title']}\"></input></td>";
 ?>
 		<td style="text-align:center">
 			<a style="cursor:pointer" onClick="javascript:linkAddBelow(this.parentNode.parentNode);" title="Add a link below this one">Add</a> |
@@ -673,7 +674,7 @@ function gen_3_thumb($ppath, $sklW, $sklH, $sklT, $sklL, $ta) { // Generate the 
 	$tpath = substr_replace($ppath, '3', -5, 1); // _9.jpg => _3.jpg
 	$rr = $w/(($w<$h)?SKL_PHOTO_W:SKL_PHOTO_W*$w/$h);
 	//echo $sklL*$rr."|".$rr."|".$sklW*$rr."|".$sklW."<br>";
-	imagecopyresampled($timg, $orig, 0, 0, $sklL*$rr, $sklT*$rr, $ta, $ta, $sklW*$rr, $sklH*$rr);
+	imagecopyresampled($timg, $orig, 0, 0, intval($sklL*$rr), intval($sklT*$rr), $ta, $ta, intval($sklW*$rr), intval($sklH*$rr));
 	imageinterlace($timg, 1);
 	imagejpeg($timg, $tpath, $basis['jpegq']);
 	chmod($tpath, 0644);
@@ -716,19 +717,19 @@ function deletePhoto($pid) {
 	unset($photos[$pid]);
 
 	reset($categs);
-	while (list($key, $val) = each($categs))
+	foreach($categs as $key => $val)
 		if (isset($val['photo']) && is_array($val['photo']))
 			if (($t = array_search($pid, $val['photo'])) !== FALSE)
 				unset($categs[$key]['photo'][$t]);
 
 	reset($stories);
-	while (list($key, $val) = each($stories))
+	foreach($stories as $key => $val)
 		if (isset($val['photo']) && is_array($val['photo']))
 			if (($t = array_search($pid, $val['photo'])) !== FALSE)
 				unset($stories[$key]['photo'][$t]);
 
 	reset($comments);
-	while (list($key, $val) = each($comments))
+	foreach($comments as $key => $val)
 		if (is_array($val))
 			if (strcmp($val['owner'], "p".$pid) == 0)
 				unset($comments[$key]);
@@ -782,7 +783,7 @@ function handle_container($contArr, $contName, $contChar) {
 
 					if ((strcmp($howto,'justc') == 0) || (strcmp($howto,'whole') == 0)) {
 						reset($conts);
-						while (list($acid, $acvals) = each($conts)) {
+						foreach($conts as $acid => $acval) {
 							if (is_array($acvals) && ($acvals['sub'] == $cid))
 								$conts[$acid]['sub'] = $conts[$cid]['sub'];			//to save the connectedness!
 						}
@@ -791,7 +792,7 @@ function handle_container($contArr, $contName, $contChar) {
 
 					if ((strcmp($howto,'empty') == 0) || (strcmp($howto,'justc') == 0)) {
 						reset($conts[$cid]['photo']);
-						while (list($key, $pid) = each($conts[$cid]['photo'])) {
+						foreach ($conts[$cid]['photo'] as $key => $pid) {
 							if (!in_array($pid, $conts[$subc]['photo']))
 								array_push($conts[$subc]['photo'], $pid);
 							if ($cid == getPhotoInfo($pid, $field)) {
@@ -811,7 +812,7 @@ function handle_container($contArr, $contName, $contChar) {
 					}
 					else if ((strcmp($howto,'whole') == 0) || (strcmp($howto,'justin') == 0))  {
 						reset($conts[$cid]['photo']);
-						while (list($key, $pid) = each($conts[$cid]['photo']))
+						foreach ($conts[$cid]['photo'] as $key => $pid)
 							if ($cid == getPhotoInfo($pid, $field)) {
 								$ok_msg .= "Photo $pid (".getPhotoInfo($pid, 'name').") Deleted Successfully.<br />\n";
 								deletePhoto($pid);
@@ -877,7 +878,7 @@ function print_container($contArr, $contName, $contNames, $contChar) {
 		reset($conts[$cid]['photo']);
 		$field = ($contChar == 'c')?'categ':'story';
 
-		while (list($key, $val) = each($conts[$cid]['photo']))
+		foreach ($conts[$cid]['photo'] as $key => $val)
 			if ($cid == getPhotoInfo($val, $field))
 				$directN++;
 ?>
@@ -929,7 +930,7 @@ function print_container($contArr, $contName, $contNames, $contChar) {
 <?php
 					reset($conts);
 					$n = isset($_GET['n'])?$_GET['n']:-1;
-					while (list($accid, $accval) = each($conts)) 		//a ceratin container value!
+					foreach($conts as $accid => $accval)			//a ceratin container value!
 						if (is_array($accval)) { 					// might be info!
 							if ($n-- == 0) {
 								echo "\t\t\t\t\t<center><a href=\"admin.php?page=$page&n=-1\">View all categories</a></center><br />\n";
@@ -990,7 +991,7 @@ function print_container($contArr, $contName, $contNames, $contChar) {
 									<option value="-1" <?php echo ($edit && ($conts[$cid]['sub'] != -1))?"":"selected=\"selected\""; ?>>No Inheritance</option>
 								<?php
 									reset($conts);
-									while (list($acid, $acvals) = each($conts))
+									foreach($conts as $acid => $acval)
 										if (is_array($acvals) && !($edit && ($acid == $cid))) {
 											$sel = $edit?($acid == $conts[$cid]['sub']):false;
 											echo "\t\t\t\t\t\t\t\t<option ".($sel?"selected=\"selected\" ":"")."value=\"$acid\">".$acid.": ".$acvals['name']."</option>\n";
@@ -1030,6 +1031,9 @@ function bannedIP($ip) {
 
 function build_rss() {
 	global $basis, $photos, $nphotos, $categs, $stories, $addadd;
+	if (!isset($photos)) {
+		return;
+	}
 	$nphotos = count($photos)-1;
 
 	$filename = 'index.xml';
@@ -1038,13 +1042,13 @@ function build_rss() {
 	fputs ($h, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 	fputs ($h, "<rss version=\"2.0\">\n");
 	fputs ($h, "<channel>\n");
-	fputs ($h, "\t<title>${basis['pgname']}</title>\n");
+	fputs ($h, "\t<title>{$basis['pgname']}</title>\n");
 	fputs ($h, "\t<link>$addadd/</link>\n");
-	fputs ($h, "\t<description>${basis['pgdesc']}</description>\n");
+	fputs ($h, "\t<description>{$basis['pgdesc']}</description>\n");
 	fputs ($h, "\t<language>en</language>\n");
 	fputs ($h, "\t<generator>http://p.horm.org/er</generator>\n");
 	fputs ($h, "\t<lastBuildDate>".date("r")."</lastBuildDate>\n");
-	fputs ($h, "\t<managingEditor>${basis['auemail']}</managingEditor>\n");
+	fputs ($h, "\t<managingEditor>{$basis['auemail']}</managingEditor>\n");
 
 	if ($nphotos > 0) {
 		end($photos);
@@ -1110,9 +1114,9 @@ function get_email_link($name="") {
 	if (strcmp($basis['showemail'], 'text') == 0)
 		$email = $name." ($emailat)";
 	else if (strcmp($basis['showemail'], 'link') == 0)
-		$email = "<a href=\"mailto:$emailat?subject=${basis['pgname']} Photos\">$name</a>";
+		$email = "<a href=\"mailto:$emailat?subject={$basis['pgname']} Photos\">$name</a>";
 	else if (strcmp($basis['showemail'], 'asis') == 0)
-		$email = "<a href=\"mailto:$emailat?subject=${basis['pgname']} Photos\">$name</a>";
+		$email = "<a href=\"mailto:$emailat?subject={$basis['pgname']} Photos\">$name</a>";
 	return $email;
 }
 
@@ -1202,12 +1206,12 @@ function dfsCategStory($contName, $cid, $depth) {
 		return;
 
 	reset($conts);
-	while (list($acid, $acval) = each($conts)) {
+	foreach($conts as $acid => $acval) {
 		if (is_array($acval) && ($acval['sub'] == $cid) && (strcmp($acval['list'], 'list') == 0)) {
 			echo "\t\t<div class=\"item\">\n";
 			for ($i=0; $i<$depth; $i++)
 				echo "\t\t\t<span style=\"padding-left: 10px;\"></span>\n";
-			$date = (isset($acval['date']))?"[${acval['date']}]":"";
+			$date = (isset($acval['date']))?"[{$acval['date']}]":"";
 			$isCur = (isset($_GET[$clet]) && (strcmp($acid, $_GET[$clet]) == 0));
 
 			$acval['name'] = cutNeck($acval['name'], 20);
@@ -1236,7 +1240,7 @@ function dfsCategStory($contName, $cid, $depth) {
 
 	reset($conts);
 	if ($cid != -1)
-		while (list($acid, $acval) = each($conts))
+		foreach($conts as $acid => $acval)
 			if ($acid == $cid) {
 				//next($conts);
 				return;
@@ -1244,7 +1248,9 @@ function dfsCategStory($contName, $cid, $depth) {
 }
 
 function cont_cmp($a, $b) {
-	return strcmp($a['name'], $b['name']);
+	$ak = is_array($a) ? $a['name'] : $a;
+	$bk = is_array($b) ? $b['name'] : $b;
+	return strcmp($ak, $bk);
 }
 
 function write_radio_list($desc, $hName, $fi, $values, $valNames) {
@@ -1663,7 +1669,7 @@ function writeRecursiveCommenting($t, $c, $r, $key, $depth) {
 
 	/* write child */
 	reset($val['childs']);
-	while (list($akey, $aval) = each($val['childs']))
+	foreach($r as $akey => $aval)
 		writeRecursiveCommenting($t, $c, $r, $aval, $depth+1);
 }
 
@@ -1694,7 +1700,7 @@ function writeCommenting($t, $c) {
 	$r = array();
 	$r[0] = array();
 	$r[0]['childs'] = array();
-	while (list($key, $val) = each($comments))
+	foreach($comments as $key => $val)
 		if (strcmp($key, "lastiid") != 0)
 			if (strcmp($val['owner'], $own) == 0) {
 				$val['reply'] = (!isset($val['reply']))?0:($val['reply']+0);
@@ -1706,7 +1712,7 @@ function writeCommenting($t, $c) {
 
 	// Mark and sweep to reduce the running time to O(N) rather than O(N2) :D
 	reset($r);
-	while (list($key, $val) = each($r))
+	foreach ($r as $key => $val)
 		if ($key != 0)
 			array_push($r[$val['reply']+0]['childs'], $key);
 
@@ -2195,7 +2201,7 @@ function write_belowIndex($func, $obj_name) {
 
 				reset($photos);
 				$rating = array();
-				while (list($key, $value) = each($photos))
+				foreach($photos as $key => $value)
 					if (strcmp($key, 'lastpid') != 0) {
 						if (rand(0, 100) < $prob) {
 							$exp = explode(" ",$value);
@@ -2266,8 +2272,8 @@ function write_firstPhoto() {
 	$wdiv = "100%";
 	if ($hasgd) {
 		list($w, $h) = getimagesize($imgAddress);
-		$wh = "width=\"${w}px\" height=\"${h}px\" ";
-		$wdiv = "${w}px";
+		$wh = "width=\"{$w}px\" height=\"{$h}px\" ";
+		$wdiv = "{$w}px";
 	}
 ?>
 	<div class="partmain">

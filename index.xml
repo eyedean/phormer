@@ -1,12 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
 <channel>
-	<title></title>
-	<link>http://127.0.0.1/phormer/</link>
-	<description></description>
+	<title>My PhotoGallery</title>
+	<link>http://localhost/</link>
+	<description>... contains my photos!</description>
 	<language>en</language>
 	<generator>http://p.horm.org/er</generator>
-	<lastBuildDate>Tue, 16 Apr 2019 14:59:45 -0700</lastBuildDate>
-	<managingEditor></managingEditor>
+	<lastBuildDate>Wed, 07 Feb 2024 23:29:56 +0000</lastBuildDate>
+	<managingEditor>myemail@mydomain.com</managingEditor>
+	<item>
+		<title>photo_2023-02-07_10-44-39</title>
+		<link>http://localhost/?p=1</link>
+		<guid isPermaLink="true">http://localhost/?p=1</guid>
+		<description>
+			<![CDATA[<img src="http://localhost/images/000001_aqjcj_9.jpg" alt="" />]]>
+		</description>
+		<pubDate>Wed, 07 Feb 2024 23:28:00 +0000</pubDate>
+		<category>Default Category</category>
+	</item>
 </channel>
 </rss>
