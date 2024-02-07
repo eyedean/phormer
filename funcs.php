@@ -30,7 +30,7 @@ CHANGE LOG:
 	}
 ?>
 <?php
-define("PHORMER_VERSION", "3.34");
+define("PHORMER_VERSION", "3.35");
 define("PHORMER_BUILD_DATE", "February 7th, 2024");
 define("DEBUG_MODE", 0);
 #define("ZIP_OPEN_PATH", 'n:\aideen\php\phormer\temp\\'); // DO NOT FORGET FINAL \ (or /) of (temp\)

@@ -123,11 +123,11 @@
 	$cmd = (isset($_GET['cmd']))?$_GET['cmd']:(isset($_POST['cmd'])?$_POST['cmd']:'');
 
 	if (($p != -1) && !isset($photos[$p]))
-		$alert_query = "The requested photo [pid = $p] does not exist!";
+		$alert_query = "The requested photo [pid = ".htmlentities($p)."] does not exist!";
 	if (($c != -1) && !isset($categs[$c]))
-		$alert_query = "The requested category [cid = $c] does not exist!";
+		$alert_query = "The requested category [cid = ".htmlentities($c)."] does not exist!";
 	if (($s != -1) && !isset($stories[$s]))
-		$alert_query = "The requested story [sid = $s] does not exist!";
+		$alert_query = "The requested story [sid = ".htmlentities($s)."] does not exist!";
 
 	$bad_query = (strlen($alert_query) > 0);
 	if ($bad_query)

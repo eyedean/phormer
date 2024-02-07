@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
 <channel>
-	<title>My PhotoGallery</title>
+	<title>Apple</title>
 	<link>http://localhost/</link>
-	<description>... contains my photos!</description>
+	<description>Bee</description>
 	<language>en</language>
 	<generator>http://p.horm.org/er</generator>
-	<lastBuildDate>Wed, 07 Feb 2024 23:29:56 +0000</lastBuildDate>
+	<lastBuildDate>Wed, 07 Feb 2024 23:40:00 +0000</lastBuildDate>
 	<managingEditor>myemail@mydomain.com</managingEditor>
 	<item>
-		<title>photo_2023-02-07_10-44-39</title>
+		<title>photo_2023-11-02_20-52-11</title>
 		<link>http://localhost/?p=1</link>
 		<guid isPermaLink="true">http://localhost/?p=1</guid>
 		<description>
-			<![CDATA[<img src="http://localhost/images/000001_aqjcj_9.jpg" alt="" />]]>
+			<![CDATA[<img src="http://localhost/images/000001_nlwqe_9.jpg" alt="" />]]>
 		</description>
-		<pubDate>Wed, 07 Feb 2024 23:28:00 +0000</pubDate>
+		<pubDate>Wed, 07 Feb 2024 23:39:00 +0000</pubDate>
 		<category>Default Category</category>
 	</item>
 </channel>
