@@ -76,7 +76,7 @@
 	$feat =	(isset($_GET['feat']))?$_GET['feat']:"";
 
 	$QS = $_SERVER['QUERY_STRING'];
-	if (($p == -1)	&&	($c == -1)	&&	($s == -1)	&&	($u == -1)	&&	($j == -1) &&	($jj == -1)
+	if (($p == -1)	&&	($c == -1)	&&	($s == -1)	&&	($u == -1)	&&	($j == -1) && ($jj == -1)
 		&& (strlen($QS) > 0) && (strpos($QS, "=") === FALSE)) {
 		$u = $QS;
 	}
@@ -141,6 +141,16 @@
 
 	if (strlen($cmd) && !$bad_query) {
 		if ($isAnAddCmnt) {
+			setcookie('phormer_cmnt_name', 	$_POST['name'], time()+3600*24*30*12);
+			setcookie('phormer_cmnt_email', 	$_POST['email'], time()+3600*24*30*12);
+			setcookie('phormer_cmnt_url', 	$_POST['url'], time()+3600*24*30*12);
+			if (isset($_POST['url'])) {
+				if (strtolower(substr($_POST['url'], 0, 6)) == "http//")
+					$_POST['url'] = substr($_POST['url'], 6);
+				if (strtolower(substr($_POST['url'], 0, 7)) == "http://")
+					$_POST['url'] = substr($_POST['url'], 7);
+			}
+
 			if ($byAdmin && !$isAdmin)
 				$alert_msg = "Only Administrator can leave comment as <b>Admin</b>";
 			else if (!$byAdmin && !isset($_POST['name']))
@@ -149,7 +159,7 @@
 				$alert_msg = "Text Body can not be left empty.";
 			else if (bannedIP($_SERVER['REMOTE_ADDR']))
 				$alert_msg = "Your IP is locked on this PhotoGallery. Contact Author!";
-			else if (!$isAdmin && isset($basis['wvw']) && isset($_POST['wvw']) &&
+			else if (!$byAdmin && isset($basis['wvw']) && isset($_POST['wvw']) &&
 					 hasWV() && (strcasecmp($_POST['wvw'], $basis['wvw']) != 0)) {
 					$alert_msg = "Incorrect word verification entry!";
 					if (isset($basis['wvw']))
@@ -182,7 +192,7 @@
 									'date' => $date, 'txt' => htmlspecialchars($_POST['txt'], ENT_COMPAT, 'UTF-8'),
 									'ip' => $_SERVER['REMOTE_ADDR'], 'owner' => "p".$_GET['p'],
 									'reply' => $reply);
-						$ok_msg = "Comment added successfully";
+						$ok_msg = "Comment added successfully!";
 						save_container('comments', 'Comment', './data/comments.xml');
 					}
 				}
@@ -202,7 +212,7 @@
 									'date' => $date, 'txt' => htmlspecialchars($_POST['txt'], ENT_COMPAT, 'UTF-8'),
 									'ip' => $_SERVER['REMOTE_ADDR'], 'owner' => "s".$_GET['s'],
 									'reply' => $reply);
-						$ok_msg = "Comment added successfully.";
+						$ok_msg = "Comment added successfully!";
 						save_container('comments', 'Comment', './data/comments.xml');
 					}
 				}
@@ -284,47 +294,30 @@
 			default:
 				$alert_msg = "Unknown command \"".$cmd."\"!";
 		}
-		if ($isAnAddCmnt) { //  && (strlen($alert_msg) == 0) removed, because one may use public PC
-			setcookie('phorm_cmnt_name', $_POST['name'], time()+3600*24*30*12);
-			setcookie('phorm_cmnt_email', $_POST['email'], time()+3600*24*30*12);
-			setcookie('phorm_cmnt_url', $_POST['url'], time()+3600*24*30*12);
-		}
 	}
 
-	if ($j != -1) {
+	$isExport = ($j != -1) || ($jj != -1);
+	if ($isExport) {
 		$path = pathinfo($_SERVER['PHP_SELF']);
 		$add = "http://".$_SERVER['SERVER_NAME'].$path["dirname"];
-		if (strcmp($path["dirname"], "/") != 00)
+		if (strcmp($path["dirname"], "/") != 0)
 			$add .= "/";
-		if (photo_exists($j)) {
+
+		$pj = ($j != -1)?$j:$jj;
+
+		if (!canThumb($pj))
+			$s = "Error: The photo #$pj is a private one and can not be exported!";
+		else if (photo_exists($pj)) {
 			$size = (isset($_GET['size']))?$_GET['size']:1;
-			$img = thumb_just_img($j, $size, "./");
-			echo "document.write('<a href=\"$add?p=$j\"><img src=\"$add/$img\" /></a>');";
+			$img = thumb_just_img($pj, $size, "./");
+
+			$s = "<a href=\\\"$add?p=$pj\\\"><img src=\\\"$add$img\\\" /></a>";
 		}
 		else
-			echo "document.write('<a href=\"$add\">The photo #$j does not exist</a>');";
-		die();
-	}
+			$s = "The photo #$pj does not exist!\n";
 
-	if ($jj != -1) {
-		$path = pathinfo($_SERVER['PHP_SELF']);
-		$add = "http://".$_SERVER['SERVER_NAME'].$path["dirname"];
-		if (strcmp($path["dirname"], "/") != 00)
-			$add .= "/";
-		if (photo_exists($jj)) {
-			$size = (isset($_GET['size']))?$_GET['size']:1;
-			$img = thumb_just_img($jj, $size, "./");
-
-			$s = "<a href=\\\"$add?p=$jj\\\"><img src=\\\"$add/$img\\\" /></a>";
-		}
-		else
-			$s = "The photo #$jj does not exist!";
-		$s .= "\n";
-
-		echo "<?php\n"; #"
-		echo "\t \$s = \"$s\"; \n";
-		echo "\t echo \$s; \n";
-		echo "?>\n";
+		echo ($j != -1) ?"document.write(\"$s\");"
+						:"<?php\n \t \$s = \"$s\"; \n\t echo \$s; \n ?>\n";
 		die();
 	}
 
@@ -661,7 +654,7 @@
 				<select name="rate" class="rate" id="rateSelect" onchange="javascript:SaveRating(<?php echo $p; ?>, this.value);">
 <?php
 				$urrate = (isset($_COOKIE['rate_'.$p])?$_COOKIE['rate_'.$p]:0);
-				$rname = array("Select Your Rate","Damn it!", "I dislike it!", "Umm...", "Nice at all!", "Excellent!");
+				$rname = array("Select Your Rate","Damn it!", "I don't like it", "Umm...", "Nice One", "Wow, Excellent!");
 				for ($i=0; $i<=5; $i++)
 					echo "\t\t\t\t\t<option value=\"$i\"".(($i == $urrate)?" selected=\"selected\"":"").">".(($i>0)?"$i: ":"")."{$rname[$i]}</option>\n";
 ?>
@@ -711,7 +704,7 @@
 					write_conts('stories', 'Stories');
 			?>
 <?php
-	if (showOnSideBar("checkstate"))
+	if (showOnSideBar("checkstat"))
 		write_stats();
 
 	if (showOnSideBar("checklink")) {

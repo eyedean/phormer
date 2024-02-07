@@ -10,6 +10,7 @@
 	$goafterlogin = '';
 	$afterInstall = false;
 	$isAdmin = false;
+	$page = isset($_GET['page'])?$_GET['page']:'welcome';
 
 	update_admin_pass_file();
 
@@ -18,58 +19,44 @@
 
 	$up = '/'; // for the manner of cookies
 
+	########### BEGIN OF Authentication Check #########
+	$validPostPasswd = isset($_POST['passwd']) && auth_admin(md5($_POST['passwd']));
+	$validCookPasswd = isset($_COOKIE['phormer_passwd']) && auth_admin($_COOKIE['phormer_passwd']);
+	$isAdmin = $validPostPasswd || $validCookPasswd;
+
 	if (!file_exists(ADMIN_PASS_FILE)) {
 		$page = (isset($_GET['page']) && (strcmp($_GET['page'], 'doinstall') == 0))?'doinstall':'install';
-	}
-	else {
-		if (isset($_COOKIE['phormer_passwd']) && auth_admin($_COOKIE['phormer_passwd'])) {// AUTH: OK
-			$isAdmin = true;
-			$page = isset($_GET['page'])?$_GET['page']:'welcome';
-		}
-		else {
-			$invalidpasswd = (!isset($_POST['passwd'])) || (!auth_admin(md5($_POST['passwd'])));
-			if ($invalidpasswd) {
-				$goafterlogin = isset($_GET['page'])?$_GET['page']:"";
-				$page = 'wrong';
-				if (isset($_POST['passwd']))
-					$alert_msg = "Wrong password!";
+	} else if ($validCookPasswd) {
+		;
+	} else if (!$validPostPasswd) {
+		$goafterlogin = isset($_GET['page'])?$_GET['page']:"";
+		$page = 'wrong';
+		$alert_msg = (isset($_POST['passwd']))?"Wrong password!":"";
+	} else { // login through _POST
+		setcookie('phormer_passwd', md5($_POST['passwd']), time()+3600*24, $up);
+		if (!$ignore) {
+			CleanTemp();
+			$conts = array( "categories"=> "Category",	"stories" 	=> "Story",
+							"photos" 	=> "Photo",		"basis" 	=> "Basis",
+							"comments" 	=> "Comment");
+			$ca0 = array();
+			$ca1 = array();
+			reset($conts);
+			foreach($conts as $cfile => $ceach) {
+				parse_container("ca0", 	$ceach, "data/$cfile.xml.bku");
+				parse_container("ca1", 	$ceach, "data/$cfile.xml");
+				if (count($ca0) > count($ca1)) // some items missed
+					$alert_msg .= "<tt>data/$cfile.xml</tt> is corrupt. "
+								."verify and <a href=\"?page=editxml\">restore</a> it.<br />\n";
 			}
-			else { // !$invalidpasswd
-				$isAdmin = true;
-				setcookie('phormer_passwd', md5($_POST['passwd']), time()+3600*24, $up);
-				$page = isset($_GET['page'])?$_GET['page']:'welcome';
-				if (isset($_GET['page']) && strcmp($_GET['page'], "logout") == 0 && isset($_POST['passwd']))
-					$page = 'welcome';
-
-				if (!$ignore) {
-					CleanTemp();
-
-					$ca0 = array();
-					$ca1 = array();
-					$conts = array( "categories"=> "Category",
-									"stories" 	=> "Story",
-									"photos" 	=> "Photo",
-									"basis" 	=> "Basis",
-									"comments" 	=> "Comment");
-
-					$alert_msg = "";
-					reset($conts);
-					foreach($conts as $cfile => $ceach) {
-						parse_container("ca0", 	$ceach, "data/$cfile.xml.bku");
-						parse_container("ca1", 	$ceach, "data/$cfile.xml");
-						if (count($ca0) > count($ca1)) // some items missed
-							$alert_msg .= "<tt>data/$cfile.xml</tt> is corrupt. "
-										."verify and <a href=\"?page=editxml\">restore</a> it.<br />\n";
-					}
-
-					if (strlen($alert_msg))
-						$alert_msg .= getHelp("XML Missed");
-					else
-						GetBackUp();
-				}
-			}
+			if (strlen($alert_msg))
+				$alert_msg .= getHelp("XML Missed");
+			else
+				GetBackUp();
 		}
 	}
+
+	########### END OF Authentication Check #########
 
 	if (page_is('install') || page_is('doinstall')) {// came from $_GET['page'] where user is authenticated!
 		if (file_exists(ADMIN_PASS_FILE)) {
@@ -135,7 +122,7 @@
 			$ok_msg .= '<br /> Now, just fill the fields below and start adding photos in the Admin Page!';
 
 			if (! file_exists("temp"))
-				if (! mkdir("temp"))
+				if (! mkdir("temp", 0711))
 					die("could not create admin/temp directory.");
 
 			if (! file_exists("data"))
@@ -143,7 +130,7 @@
 					die("could not create data directory.");
 
 			if (! file_exists("images"))
-				if (! mkdir("images"))
+				if (! mkdir("images", 0711))
 					die("could not create images directory.");
 
 			@chmod(".", 		0711);
@@ -209,10 +196,11 @@
 	### page is fixed and verified till now,
 	### so just do the cmd!
 
-	if (array_search($page, array('welcome', 'wrong', 'doneinside', 'doneoutside', 'logout', 'dochangepass',
-								   'doinstall', 'install', 'doinstall',
-								  'photos', 'categories', 'stories', 'basis', 'editxml', 'comments',
-								  'changepass', 'uninstall', 'configs', 'drafts')) === FALSE) {
+	if (array_search($page,
+		array('welcome', 	'wrong', 	'doneinside','doneoutside', 'logout', 'dochangepass',
+		      'doinstall', 	'install', 	'doinstall',
+			  'photos', 	'categories', 'stories', 'basis', 		'editxml', 'comments',
+			  'changepass', 'uninstall', 'configs',  'drafts')) === FALSE) {
 		$alert_msg = "Invalid page ($page)! Pick one below:";
 		$page = 'welcome';
 	}
@@ -242,6 +230,13 @@
 	$headName = isset($basis['pgname'])?$basis['pgname']:"PhotoGallery";
 	if (page_is('basis') && isset($_POST['pgname']))
 		$headName = $_POST['pgname'];
+	if (!isset($basis['helplang']) || strcmp($basis['helplang'], 'off')==0)
+		$basis['helplang'] = 'en';
+	
+	$lang = $basis['helplang'];
+	// it might be current page!
+	if (isset($_POST['helplang']))
+		$lang = $_POST['helplang'];
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
@@ -250,6 +245,11 @@
 	<link rel="stylesheet" type="text/css" href="files/adminfiles/admin.css">
 	<script type="text/javascript" language="javascript" src="files/adminfiles/admin.js"></script>
 	<script type="text/javascript" language="javascript" src="files/adminfiles/skeleton.js"></script>
+	<?php if ($lang == 'en') { ?><script type="text/javascript" language="javascript" src="files/adminfiles/help_en.js"></script><?php } ?>
+	<?php if ($lang == 'fr') { ?><script type="text/javascript" language="javascript" src="files/adminfiles/help_fr.js"></script><?php } ?>
+	<?php if ($lang == 'it') { ?><script type="text/javascript" language="javascript" src="files/adminfiles/help_it.js"></script><?php } ?>
+	<?php if ($lang == 'sk') { ?><script type="text/javascript" language="javascript" src="files/adminfiles/help_sk.js"></script><?php } ?>
+	
 	<script type="text/javascript" language="javascript" src="files/adminfiles/help.js"></script>
 	<title><?php echo $pageNameTitle; ?></title>
 <?php
@@ -333,9 +333,11 @@ onblur="javascript:blured=true;" onfocus="javascript:if(blured){try{dg('loginAdm
 				<?php
 					parse_container('comments', 'Comment', 'data/comments.xml');
 					$lastcmnt = (int)$comments['lastiid'];
-					end($comments);
-					if (isset($basis['lastcmntseen']) && ($lastcmnt > $basis['lastcmntseen'])) {
-						$notseen = ($lastcmnt - $basis['lastcmntseen']);
+
+					if (isset($basis['lastcmntseen']) && ($lastcmnt > (int)$basis['lastcmntseen'])) {
+						for(end($comments), $notseen = 0; key($comments) > (int)$basis['lastcmntseen']; prev($comments))
+							$notseen++;
+
 						if ($notseen == 1)
 							$notseen = "one";
 						echo "<div class=\"method\"><div class=\"note_valid\">"
@@ -675,6 +677,7 @@ if (page_is('doneoutside')) {
 							</td><td>
 								<span class="dot">&#149;</span><a href="?page=editxml&cmd=open&src=data%2Fbasis.xml">Basis</a>
 							</td><td>
+								<span class="dot">&#149;</span><a href="?page=editxml&cmd=open&src=data%2Fvisits.xml">Visits</a>
 							</td></tr>
 						</table>
 						<center><hr size="1" color="#BBB" width="60%" style="margin: 15px 0px;" /></center>
@@ -704,6 +707,7 @@ if (page_is('doneoutside')) {
 							</td><td>
 								<span class="dot">&#149;</span><a onclick="return ConfirmRestore();" href="?page=editxml&cmd=restore&src=data%2Fbasis.xml">Basis</a>
 							</td><td>
+								<span class="dot">&#149;</span><a onclick="return ConfirmRestore();" href="?page=editxml&cmd=restore&src=data%2Fvisits.xml">Visits</a>
 							</td></tr>
 						</table>
 						<center><hr size="1" color="#BBB" width="60%" style="margin: 15px 0px;" /></center>
@@ -1068,7 +1072,7 @@ if (page_is('configs')) {
 								</select>
 							</td></tr>
 							<tr><td valign="top">
-								<span style="padding-left: 93px;"></span> <b>Photos in Recent Photos</b>
+								<span style="padding-left: 53px;"></span> <b>Photos in Recent Photos</b>
 								<?php writeHelp("Default Photo Num in Recents"); ?>:
 							</td><td>
 								&nbsp;&nbsp;
@@ -1085,7 +1089,7 @@ if (page_is('configs')) {
 								</select>
 							</td></tr>
 							<tr><td valign="top">
-								<span style="padding-left: 93px;"></span> <b>Photos in Top Rated/Visited</b>
+								<span style="padding-left: 53px;"></span> <b>Photos in Top Rated/Visited</b>
 								<?php writeHelp("Default Photo Num in Tops"); ?>:
 							</td><td>
 								&nbsp;&nbsp;
@@ -1102,7 +1106,7 @@ if (page_is('configs')) {
 								</select>
 							</td></tr>
 							<tr><td valign="top">
-								<span style="padding-left: 93px;"></span> <b>Stories in Story mode</b>
+								<span style="padding-left: 53px;"></span> <b>Stories in Story mode</b>
 								<?php writeHelp("Default Story Num in mode"); ?>:
 							</td><td>
 								&nbsp;&nbsp;
@@ -1119,7 +1123,7 @@ if (page_is('configs')) {
 								</select>
 							</td></tr>
 							<tr><td valign="top">
-								<span style="padding-left: 93px;"></span> <b>Stories in Sidebar</b>
+								<span style="padding-left: 53px;"></span> <b>Stories in Sidebar</b>
 								<?php writeHelp("Default Story Num in Sidebar"); ?>:
 							</td><td>
 								&nbsp;&nbsp;
@@ -1180,9 +1184,9 @@ if (page_is('configs')) {
 
 								echo $field_sep;
 
-								write_radio_list("Help System Display", 'Help System',
-												 'helplang', array('en', 	'it', 	'off'),
-															 array('English', 'Italian', 	"Don't Show"));
+								write_radio_list("Help System Language", 'Help System',
+												 'helplang', array('en', 	  'fr', 	'sk', 		'it', 		'off'),
+															 array('English', 'French', 'Slovak', 	'Italian', 	"None"));
 
 								echo $field_sep;
 
@@ -1223,7 +1227,7 @@ if (page_is('configs')) {
 								<script language="javascript" type="text/javascript">
 									nowTime = new Date;
 									nowTime.setHours(<?php echo date("G"); ?>);
-									nowTime.setMinutes(<?php echo date("i"); ?>);
+									nowTime.setMinutes(<?php echo date("i")+0; ?>); // +0, to omit leading zero! it would be parsed as OCT number in javascript!
 								</script>
 							</td><td>
 								<input name="timediffer" id="timediffer" class="text" size="10" type="text"
@@ -1269,7 +1273,7 @@ if (page_is('configs')) {
 							<?php echo $field_sep; ?>
 
 							<tr><td valign="top">
-								<span class="dot">&#149;</span><b>Banned Unwanted IPs</b>
+								<span class="dot">&#149;</span><b>Banned IPs</b>
 								<?php writeHelp("Banned IPs"); ?>:
 							</td><td>
 								<textarea name="bannedip" class="textarea" cols="40" type="text" rows="4"><?php echo isset($basis['bannedip'])?$basis['bannedip']:''; ?></textarea>
@@ -1358,6 +1362,7 @@ if (page_is('comments')) {
 	}
 
 	end($comments);
+	$lastbefore = (int)$basis['lastcmntseen'];
 	$basis['lastcmntseen'] = $comments['lastiid'];
 	save_container('basis', 'Basis', 'data/basis.xml');
 	reset($comments);
@@ -1389,8 +1394,8 @@ if (page_is('comments')) {
 												<a href="?page=comments&n=<?php echo "$n&st=".($st-$n); ?>">Prev Page</a> |
 												<a href="?page=comments&n=<?php echo "$n&st=".($st+$n); ?>">Next Page</a> ]
 					</span><br />
-					<div style="padding-left: 30px">
-					<table width="100%">
+					<div style="margin: 0px 10px 0px 0px;   ">
+					<table style=" width:100%; position: relative;">
 <?php
 					$c = 0;
 					for (end($comments); $c < $st; prev($comments))
@@ -1413,10 +1418,10 @@ if (page_is('comments')) {
 								$udate = mktime($dates[3], $dates[4], 0, $dates[1], $dates[2], $dates[0]);
 
 								$diff = SecsToText($utoday-$udate);
-								$date .= " (".$diff.") :: ";
+								$date .= " (".$diff.")";
 							}
-
-							echo "\t\t\t\t\t\t\t<tr><td class=\"c\" width=\"20%\">";
+							$style = ((int)$aiid > $lastbefore)?"background: #CED;":"";
+							echo "\t\t\t\t\t\t\t<tr style=\"$style\"><td class=\"c\" width=\"20%\">";
 							if ($tl == 'p')
 								thumbBox($tv, '', true, true);
 							else
@@ -1428,22 +1433,28 @@ if (page_is('comments')) {
 							if (strlen($aival['url']) > 0) {
 								if (strlen($infoatw) > 0)
 									$infoatw .= " | ";
-								$infoatw .= "<a href=\"http://".$aival['url']."\">w</a>";
+								if (strtolower(substr($aival['url'], 0, 6)) == "http//")
+									$aival['url'] = substr($aival['url'], 6);
+								if (strtolower(substr($aival['url'], 0, 7)) != "http://")
+									$aival['url'] = "http://".$aival['url'];
+								$infoatw .= "<a href=\"".$aival['url']."\">W</a>";
 							}
 							if (strlen($infoatw) > 0)
 								$infoatw = " [ ".$infoatw." ] ";
 							$en = textDirectionEn($aival['txt']);
 							$dir = $en?"":"r";
-							echo "\t\t\t\t\t\t\t<td><span style=\"padding-left: 20px;\" class=\"dot\">&#149;</span>"
-								."<span class=\"categinfo\">"
-								."$date</span> "
+							$said = ($aival['reply']==0)?"said":"replied";
+							echo "\t\t\t\t\t\t\t<td style=\"padding-right: 30px \">"
+								."<span class=\"leaveReply\">[<a href=\"?page=$page&cmd=del&iid=$aiid\" onclick=\"javascript:return confirmDelete('".$comments[$aiid]['name']."'+'\'s comment');\">Delete</a>]</span>"
+								."<span class=\"leaveReply\">[<a href=\".?p=$tv&reply=$aiid#leaveComment\" target=\"_blank\">Reply</a>]</span>"
+								."<span style=\"padding-left: 20px;\" class=\"dot\">&#149;</span>"
+								."On <span class=\"categinfo\">"
+								."$date</span>, "
 								.$aival['name']."&lrm; {".$aival['ip']."}".$infoatw
-								." said: "
-								."<span style=\"color: #333; \">"
-								." [<a href=\"?page=$page&cmd=del&iid=$aiid\" onclick=\"javascript:return confirmDelete('".$comments[$aiid]['name']."'+'\'s comment');\">Delete</a>]"
-								."</span><br />\n"
+								." $said: "
+								."<br />\n"
 							."\t\t\t\t\t\t\t<div class=\"categdescnob$dir\">".nl2br($aival['txt'])."</div></td></tr>\n"
-							."\t\t\t\t\t\t\t<tr><td colspan=\"2\"><hr coor=\"#BCD\" width=\"80%\" size=\"1\" /></td></tr>\n";
+							."\t\t\t\t\t\t\t<tr><td colspan=\"2\"><center><hr width=\"80%\" size=\"1\" /></center></td></tr>\n";
 						}
 					}
 					reset($comments);
@@ -1568,7 +1579,7 @@ if (page_is('drafts')) { ?>
 									   'photoinfo' 	=> $photoInfo,
 									   'pid' 		=> $pid,
 									   'categ' 		=> $_POST['categ'],
-									   'story' => $_POST['story'],
+									   'story' 		=> $_POST['story'],
 									   'postfix' 	=> $seed
 									   );
 
@@ -1583,6 +1594,7 @@ if (page_is('drafts')) { ?>
 
 						copy($dpath, $curppath);
 						$ppath = $curppath;
+						chmod($ppath, 0644);	
 						GenerateAddPhotoRequired($ppath, true); // $gen3 = true;
 						DeleteFromDrafts($dpath);
 						echo "Photo \"<a href=\".?p=$pid\">".$photo['name']."</a>\" (pid: $pid) added succesfully from file \"{$vv}\"!<br />";
@@ -1879,9 +1891,11 @@ if (page_is('drafts')) { ?>
 					else {
 						if ($isAdd || $reget) {
 							copy($ppath, $curppath);
+							chmod($curppath, 0644);								
 							DeleteFromDrafts($ppath);
 							$ppath = PHOTO_PATH.$pid6let;
 						}
+						//echo "????".$isAdd."????";
 						$gen3 = $isAdd || ($isEdt && (isset($_POST['genThumb'])) &&
 													(strcmp($_POST['genThumb'], "gen") == 0));
 						GenerateAddPhotoRequired($ppath, $gen3);

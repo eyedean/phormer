@@ -16,8 +16,8 @@ address <http://www.gnu.org/licenses/gpl.html>.
  Product URL		http://p.horm.org/er
  Product Description	A PHP (without MySQL) PhotoGallery Manager
  
- Latest Version		3.31
- Release Date 		2007/01/13
+ Latest Version		3.33
+ Release Date 		2008/04/12
 
  Author's Name		Aidin NasiriShargh 
  Author's Email		aideen[at]gmail[dot]com
@@ -49,17 +49,18 @@ and after installation (getting the `installation completed' message):
    
 UPDATE HOW-TO:
 ==============
- 0 - Remove folder "files/" and all files in root of installation directory 
-     (e.g. index.php, admin.php and etc.) after that, there should be just 3 
-     folders of "data/", "images/" and "temp/" there with no files in root 
-     folder.
-     HINT: in correct accessing mode, those 3 folders are owned by PHP and you
-     may not delete them.
- 1 - place all the contents of download phormer (i.e. a folder of "files/" and 
+ 0 - Download the latest version of phormer###.zip from http://p.horm.org/er
+ 1 - Remove folder "files/" and all files in root of installation directory 
+     (e.g. index.php, admin.php and etc.) EXCEPT OF index.xml. 
+     after that, there should be just 3 folders of "data/", "images/" 
+     and "temp/" and one index.xml file in root.
+     HINT: in correct accessing mode, those 3 folders and also index.xml are 
+     created and owned by PHP and you may not delete them.
+ 2 - place all the contents of download phormer (i.e. a folder of "files/" and 
      some files to be placed at root of installation) there. no conflict should
      occur.
- 2 - go to administration area (http://somewhere/photos/admin.php) and work 
-     fine! All your images would be saved through an update.
+ 3 - go to administration area (http://somewhere/photos/admin.php) and work 
+     fine! All of your photos and datas would be saved through an update.
  That's all!
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,7 +130,7 @@ FEATURES:
 			inside the Phormer by one click (after confirmation!).
 * Fast and valid pages:	Tableless and human-made XHTML codes for both admin
 			and visitors page, leads faster and cleaner pages which
-			are tested in common browers! also the image-less and
+			are tested in common browsers! also the image-less and
 			comfortable administration region has provided very 
 			fast and exact navigation whole around!
 * XML databases: 	Light, easy to handle/manage/backup/manualModification.
@@ -182,7 +183,7 @@ FEATURES:
 			be browsed totally sorted-by-date by admin and be 
 			deleted (if needed!) by a single click.
 			also, since version 3.10, word verification feature has
-			comen to help fighting against spam commenters!
+			come to help fighting against spam commenters!
 * Hit Counter:		Counts each shot's view-times, separately!
 * Easy export:		Use each photo in your weblog/website (in proper size) 
 			by a single code (e.g. something like this line:
@@ -228,4 +229,12 @@ ALSO, ON VERSION 3.30 AND AFTER:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This Readme is Last-Updated on 2007/01/13 by Aidin NasiriShargh [http://i.horm.org].
+CHANGES:
+=========
++ 070515	* Fixed chmod problem: It now works fine even if PHP's default write 
+		  mode be 700 instead of 711. 
+		* Fixed upload bugs in both types.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This Readme is Last-Updated on 2008/04/12 by Aidin NasiriShargh [http://i.horm.org].

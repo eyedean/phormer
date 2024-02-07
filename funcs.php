@@ -1,13 +1,8 @@
 <?php
-define("PHORMER_VERSION", "3.31");
-define("PHORMER_BUILD_DATE", "13th Jan. 2007");
+define("PHORMER_VERSION", "3.33");
+define("PHORMER_BUILD_DATE", "12th April, 2008");
 define("DEBUG_MODE", 0);
 #define("ZIP_OPEN_PATH", 'n:\aideen\php\phormer\temp\\'); // DO NOT FORGET FINAL \ (or /) of (temp\)
-
-if( ! ini_get('date.timezone') )
-{
-    date_default_timezone_set('America/Los_Angeles');
-}
 
 $thumbCntArr = array(5, 10, 20, 50, 100);
 
@@ -218,8 +213,10 @@ function auth_admin($passwd = "") {
 	}
 	$adminPass = "";
 	if (!defined("ADMIN_PASS_MD5"))
-		include_once(ADMIN_PASS_FILE);
+		@include_once(ADMIN_PASS_FILE);
 
+	if (!defined("ADMIN_PASS_MD5"))
+		return false;
 	return (strcmp($passwd, ADMIN_PASS_MD5) == 0);
 }
 
@@ -237,7 +234,7 @@ function textDirectionEn($txt){
 		$l = $txt[$i];
 		$en &= ctype_lower($l) || ctype_upper($l) || ctype_punct($l) || ctype_digit($l) ||
 			   ctype_space($l) || (strpos("/\\!@#$%^&*(){}[];\"'", $l) != FALSE ||
-			   strpos("��������������������������������������������������������", $l) != FALSE ); #'
+			   strpos("", $l) != FALSE ); #'
 	}
 	return $en;
 }
@@ -539,7 +536,7 @@ function save_container($parse_infoName, $p_each, $xmlfile) {
 	/* This action is supposed to guarentee synchronizations! */
 	if (!copy($tempfile, $xmlfile))
 		die("couldn't copy $tempname to $xmlfile.");
-	unlink($tempfile);
+	@unlink($tempfile);
 
 	parse_container($parse_infoName, $p_each, $xmlfile, false);
 }
@@ -582,8 +579,8 @@ function writeLinkLine($x, $arr = "") {
 	echo "\n\t\t<td><input class=\"textW\" name=\"l${x}t\" id=\"l${x}t\" value=\"${arr['title']}\"></input></td>";
 ?>
 		<td style="text-align:center">
-			<a style="cursor:pointer" onclick="javascript:linkAddBelow(this.parentNode.parentNode);" title="Add a link below this one">Add</a> |
-			<a style="cursor:pointer" onclick="javascript:linkDelThis(this.parentNode.parentNode);" title="Delete this Link">Del</a>
+			<a style="cursor:pointer" onClick="javascript:linkAddBelow(this.parentNode.parentNode);" title="Add a link below this one">Add</a> |
+			<a style="cursor:pointer" onClick="javascript:linkDelThis(this.parentNode.parentNode);" title="Delete this Link">Del</a>
 		</td>
 	</tr>
 <?php
@@ -619,6 +616,7 @@ function makeTheThumb($ppath, $ta, $mood, $tchar) {
 	imagecopyresampled($timg, $orig, 0, 0, 0, 0, $tw, $th, $w, $h);
 	imageinterlace($timg, 1);
 	imagejpeg($timg, $tpath, $basis['jpegq']);
+	chmod($tpath, 0644);
 	imagedestroy($timg);
 	return "ENDED;$tw;$th";
 }
@@ -634,6 +632,7 @@ function gen_3_thumb($ppath, $sklW, $sklH, $sklT, $sklL, $ta) { // Generate the 
 	imagecopyresampled($timg, $orig, 0, 0, $sklL*$rr, $sklT*$rr, $ta, $ta, $sklW*$rr, $sklH*$rr);
 	imageinterlace($timg, 1);
 	imagejpeg($timg, $tpath, $basis['jpegq']);
+	chmod($tpath, 0644);
 	imagedestroy($timg);
 }
 
@@ -840,7 +839,7 @@ function print_container($contArr, $contName, $contNames, $contChar) {
 ?>
 					<span class="name">Delete <a href=".?<?php echo $contChar."=".$cid; ?>"><?php echo $theName; ?></a> </span><br />
 					<div style="padding: 5px 30px 15px">
-						<form method="post" action="?page=<?php echo $page."&".$contChar."id=".$cid; ?>&cmd=del" onsubmit="javascript:return confirmDelete('<?php echo $conts[$cid]['name']; ?>');">
+						<form method="post" action="?page=<?php echo $page."&".$contChar."id=".$cid; ?>&cmd=del" onSubmit="javascript:return confirmDelete('<?php echo $conts[$cid]['name']; ?>');">
 							<span class="dot">&#149;</span>Which action do you wish to do?<br />
 							<table width="100%" style="margin-left: 20px;">
 							<tr><td width="25%"><label><input name="howto" value="empty" type="radio" class="radio" checked="checked" >&nbsp;<b>Clear The <?php echo $contName; ?>:</b></input></label></td>
@@ -905,7 +904,7 @@ function print_container($contArr, $contName, $contNames, $contChar) {
 										" ".'since '.$accval['date']
 										.", ".((strcmp($accval['getcmnts'], "yes") == 0)?
 											getCommentCount('s'.$accid, true)
-											:'Doesnt get comments')
+											:"Doesn't get comments")
 										:'')
 									.", ".(strlen($accval['pass'])?'Protected by "'.$accval['pass'].'"':'Public')
 									." & ".(strcmp($accval['list'], 'list') == 0?'Listed':'Not listed')
@@ -922,7 +921,7 @@ function print_container($contArr, $contName, $contNames, $contChar) {
 				<div class="method" style="margin-top: 25px;">
 					<span class="name"><?php echo $edit?('Edit the '.$contName.' "'.$conts[$cid]['name'].'"'):"<a style=\"color: black\" href=\"?page=$page\">Add a new ".$contName.'</a>'; ?></span><br />
 					<center>
-						<form method="post" action="?page=<?php echo $page; ?>&cmd=<?php echo $edit?'edt':'add'; ?>" onsubmit="javascript:return (checkHasPass()<?php echo (strcmp($contName, "Story") == 0)?'&& checkDate()':''; ?>);">
+						<form method="post" action="?page=<?php echo $page; ?>&cmd=<?php echo $edit?'edt':'add'; ?>" onSubmit="javascript:return (checkHasPass()<?php echo (strcmp($contName, "Story") == 0)?'&& checkDate()':''; ?>);">
 						<input type="hidden" name="<?php echo $ccid; ?>" value="<?php echo $edit?$cid:($conts['last'.$ccid]+1); ?>"></input>
 						<table width="70%" cellpadding="5" style="position: relative; text-align: left; ">
 							<tr><td>Name<?php writeHelp("Container Name"); ?>:</td>
@@ -938,8 +937,8 @@ function print_container($contArr, $contName, $contNames, $contChar) {
 								<td><span style="margin-left: 5px"> </span><label for="listRadioYe"><input id="listRadioYe" <?php echo ($edit && !strcmp($conts[$cid]['list'], "list") == 0)?'':'checked="checked" '; ?>name="list" value="list" type="radio" class="radio">Listed</input></label>
 									<span style="margin-left: 42px"></span><label for="listRadioNo"><input id="listRadioNo" <?php echo ($edit && !strcmp($conts[$cid]['list'], "list") == 0)?'checked="checked" ':''; ?>name="list" value="hide" type="radio" class="radio">Not Listed</input></label></td></tr>
 							<tr><td>Privacy<?php writeHelp("Container Privacy"); ?>:</td>
-								<td>	<span style="margin-left: 5px"> </span><label for="public"     ><input                  <?php echo ($edit && (strlen($conts[$cid]['pass'])))?'':'checked="checked" '; ?>name="passRadio" value="" type="radio" class="radio" id="public" onclick="javascript:checkPrivacyRow();">Public</input></label>
-										<span style="margin-left: 42px"></span><label for="passworded" ><input id="passworded"  <?php echo ($edit && (strlen($conts[$cid]['pass'])))?'checked="checked" ':''; ?>name="passRadio" value="" type="radio" class="radio" onclick="javascript:checkPrivacyRow();">Passworded</input></label></td></tr>
+								<td>	<span style="margin-left: 5px"> </span><label for="public"     ><input                  <?php echo ($edit && (strlen($conts[$cid]['pass'])))?'':'checked="checked" '; ?>name="passRadio" value="" type="radio" class="radio" id="public" onClick="javascript:checkPrivacyRow();">Public</input></label>
+										<span style="margin-left: 42px"></span><label for="passworded" ><input id="passworded"  <?php echo ($edit && (strlen($conts[$cid]['pass'])))?'checked="checked" ':''; ?>name="passRadio" value="" type="radio" class="radio" onClick="javascript:checkPrivacyRow();">Passworded</input></label></td></tr>
 							<tr id="passwordRow" <?php echo ($edit && (strlen($conts[$cid]['pass'])))?'':'style="display: none"'; ?>><td>Password:</td><td><input name="pass" id="password" type="text" class="text" autocomplete="off" size="20" value ="<?php echo $edit?$conts[$cid]['pass']:''; ?>"></input></td></tr>
 							<tr><td>Child of<?php writeHelp("Container Inheritance"); ?>:</td><td>
 								<span style="margin-left: 10px"></span>
@@ -1125,7 +1124,7 @@ function write_headers($title) {
 ?>
 		<title><?php echo $title ?></title>
 	</head>
-	<body<?php if (($p != -1) || ($s != -1)) echo " onload=\"prepareBody();\""; ?>>
+	<body<?php if (($p != -1) || ($s != -1)) echo ' onload="prepareBody();" onfocus="updateWV();"'; ?> >
 <?php
 }
 
@@ -1243,8 +1242,8 @@ function write_conts($contarr, $contName) {
 		."</div>\n";
 	echo "\t\t<div class=\"submenu\">\n";
 
-	if (strcasecmp($contName, "stories") != 0)
-		uasort(${$contarr}, "cont_cmp");
+//	if (strcasecmp($contName, "stories") != 0)
+//		uasort(${$contarr}, "cont_cmp");
 
 	dfsCategStory($contarr, -1, 0, 0);
 	if ((strcasecmp($contarr, 'stories') == 0) && ($wStories >= $basis['defrss']))
@@ -1545,6 +1544,7 @@ function writeRecursiveCommenting($t, $c, $r, $key, $depth) {
 	$val = $r[$key];
 
 	/* write this */
+	if ($key != 0) {
 		echo "<div style=\"position: relative; margin-left: ".(20+RecursiveDepthToPx($depth))."px; \">";
 		echo "<div class=\"divClear\"></div>";
 		echo "<div style=\"position: relative;\">";
@@ -1554,19 +1554,19 @@ function writeRecursiveCommenting($t, $c, $r, $key, $depth) {
 		echo "<span class=\"leaveReply\">[<a href=\"#leaveComment\" onclick=\"javascript:doReply('$key')\">"
 			." Reply </a>]</span>";
 
-		$name = trim($val['name']);
-		$www = trim($val['url']);
-		if (strtolower(substr($www, 0, 7)) == "http//")
+		$name 	= trim($val['name']);
+		$email 	= trim($val['email']);
+		$www 	= trim($val['url']);
+		if (strtolower(substr($www, 0, 6)) == "http//")
 			$www = substr($www, 6);
 		if (strtolower(substr($www, 0, 7)) != "http://")
 			$www = "http://".$www;
-		$email = trim($val['email']);
 
 
 		if (strlen($name) == 0) $name = "Anonymous";
 		if (strcmp($name, "ADMIN") == 0) {
 			$name = "<b>Admin</b> ({$basis['auname']})";
-			$www = ".";
+			$www = ($www == "http://")?".":$www;
 			$email = get_email_address();
 		}
 		if ($isAdmin)
@@ -1587,18 +1587,19 @@ function writeRecursiveCommenting($t, $c, $r, $key, $depth) {
 			$emailat = str_replace(array("@", "."), array("[at]", "[dot]"), $email);
 			echo "<a href=\"mailto:".$emailat."\">@</a>";
 		}
-		if ($isAdmin) {
-			echo " | <a href=\".?$t=$c&cmd=delcmnt&cmntid=$key#cmnts\">";
-			echo "del</a>";
-		}
+		if ($isAdmin)
+			echo " | <a href=\".?$t=$c&cmd=delcmnt&cmntid=$key#cmnts\" onclick=\"return confirm('Delete {$val['name']}\'s Comment?')\">del</a>";
 		if ($haswww || (strlen($email)))
 			echo " ]";
 		$dates = sscanf($val['date'], "%d-%d-%d %d:%d");
 		if ($dates[0] == 0)
 			$mtime = "";
-		else
-			$mtime = " on ".date("M jS \o\f y \a\\t H:i", mktime($dates[3], $dates[4], 0, $dates[1], $dates[2], $dates[0]));
-		echo $mtime." said:";
+		else {
+			$thetime = mktime($dates[3], $dates[4], 0, $dates[1], $dates[2], $dates[0]);
+			$mtime = " on ".date("M jS", $thetime)." of ".date("y", $thetime)." at ".date("H:i", $thetime);
+		}
+		$said = ($depth == 0)?"said":"replied";
+		echo "$mtime $said:";
 		echo "</div>\n";
 
 		$en = textDirectionEn($val['txt']);
@@ -1607,11 +1608,12 @@ function writeRecursiveCommenting($t, $c, $r, $key, $depth) {
 		echo "</blockquote>\n";
 		echo "</div>\n";
 		echo "</div>";
+	}
 
 	/* write child */
-	while (list($akey, $aval) = each($r))
-		if ($aval['reply'] == $key)
-			writeRecursiveCommenting($t, $c, $r, $akey, $depth+1);
+	reset($val['childs']);
+	while (list($akey, $aval) = each($val['childs']))
+		writeRecursiveCommenting($t, $c, $r, $aval, $depth+1);
 }
 
 
@@ -1622,44 +1624,50 @@ function writeCommenting($t, $c) {
 	<center>
 	<a name="Commenting"></a>
 	<div class="Commenting">
-		<div class="title" style="width: 100%">
+		<div class="title">
 			<span class="leaveReply" style="padding-right: 5px; letter-spacing :0px;">
-				[<a href="#hide" onclick="toggle('allComments', 'contractComments', this);"> Hide all </a> ]
+				[<a href="#hide" onClick="toggle('allComments', 'contractComments', this);"> Hide all </a> ]
 			</span>
 			<span class="reddot" style="font-size: 14px">&#149;</span>
 			<a href="#Commenting">Comments on this <?php echo $cname; ?></a>
 		</div>
 		<div id="contractComments" class="bcell" style="display: none; text-align: center">
-			&#133; Comments Contracted &#133;
+			<span style="font-size: 1.3em;">{</span> Comments Contracted <span style="font-size: 1.3em;">}</span>
 		</div>
 		<div id ="allComments" style="display: block;">
 <?php
-	global $comments, $isAdmin, $basis, $_COOKIE;
+	global $comments, $isAdmin, $basis, $_COOKIE, $_GET;
 	$own = $t.$c;
 
 	reset($comments);
 	$r = array();
+	$r[0] = array();
+	$r[0]['childs'] = array();
 	while (list($key, $val) = each($comments))
 		if (strcmp($key, "lastiid") != 0)
 			if (strcmp($val['owner'], $own) == 0) {
-				if (!isset($val['reply']))
-					$val['reply'] = 0;
+				$val['reply'] = (!isset($val['reply']))?0:($val['reply']+0);
 				$r[$key] = $val;
+				$r[$key]['childs'] = array();
 			}
-	reset($r);
 
+	// Mark and sweep to reduce the running time to O(N) rather than O(N2) :D
+	reset($r);
 	while (list($key, $val) = each($r))
-		if ($val['reply'] == 0)
-			writeRecursiveCommenting($t, $c, $r, $key, 0);
-	if (count($r) == 0)
-		echo "<div class=\"bcell\">No Comment yet.</div>\n";
+		if ($key != 0)
+			array_push($r[$val['reply']+0]['childs'], $key);
+
+	if (count($r) > 1)
+	 	writeRecursiveCommenting($t, $c, $r, 0, -1);
+	else
+		echo "<div class=\"bcell\" style=\"text-align: center\">No Comment yet. Be the <a href=\"#leaveComment\">First</a>!</div>\n";
 ?>
 		</div>
 		<div class="bottitle">&nbsp;</div>
 		<a name="leaveComment"></a>
 		<div class="title"><span class="reddot">&#149;</span><a href="?<?php echo "$t=$c"; ?>"> Leave your own comment</a></div>
 		<div class="bcell">
-			<form action="<?php echo ".?$t=$c#cmnts"; ?>" method="post"<?php if (!$isAdmin) echo ' onsubmit="return checkWV();"'; ?>>
+			<form action="<?php echo ".?$t=$c#cmnts"; ?>" method="post" onSubmit="return checkWV();">
 			<table cellspacing="2" cellpadding="2" width="60%">
 <?php if ($isAdmin)	{  ?>
 			<tr><td width="40%">
@@ -1674,56 +1682,58 @@ function writeCommenting($t, $c) {
 	foreach (array('name', 'email', 'url', 'reply') as $item) {
 		$def = "def";
 		${$def.$item} = "";
-		if (isset($_COOKIE['phorm_cmnt_'.$item]))
-			${$def.$item} = $_COOKIE['phorm_cmnt_'.$item];
+		if (isset($_COOKIE['phormer_cmnt_'.$item]))
+			${$def.$item} = $_COOKIE['phormer_cmnt_'.$item];
 		if (strlen($alert_msg) && isset($_POST[$item]))
 			${$def.$item} = $_POST[$item];
 	}
+	if (isset($_GET['reply']))
+		$defreply = $_GET['reply'];
 ?>
 					<tr id="ComNameTR" <?php echo $defDisp; ?>>
-						<td width="40%">  Name:   </td>
-						<td width="60%"><input type="text" size="20" name="name" value="<?php echo $defname; ?>"></td>
+						<td width="40%"> &emsp; &emsp; Name:   </td>
+						<td width="60%"><input type="text" size="25" name="name" value="<?php echo $defname; ?>"></td>
 					</tr>
 					<tr id="ComEmailTR" <?php echo $defDisp; ?>>
-						<td>  Email:  </td>
-						<td><input type="text" size="20" name="email" value="<?php echo $defemail; ?>"></td>
+						<td> &emsp; &emsp; Email:  </td>
+						<td><input type="text" size="25" name="email" value="<?php echo $defemail; ?>"></td>
 					</tr>
 					<tr id="ComWebTR" <?php echo $defDisp; ?>>
-						<td>  Webpage:</td>
-						<td><input type="text" size="20" name="url" value="<?php echo $defurl; ?>"></td>
+						<td> &emsp; &emsp;  Webpage:</td>
+						<td><input type="text" size="25" name="url" value="<?php echo $defurl; ?>"></td>
 					</tr>
 <?php
-	if (!$isAdmin && hasWV()) {
+	if (/*!$isAdmin && */hasWV()) {
 					$basis = array();
 					parse_container('basis', 'Basis', 'data/basis.xml');
 					$basis['wvw'] = random_string();
 					save_container('basis', 'Basis', 'data/basis.xml');
 ?>
 					<tr id="ComWVTR" <?php echo $defDisp; ?>>
-						<td valign="bottom">
-							Word verification:
+						<td valign="center">
+							&emsp; &emsp; Word verification:
 						</td>
 						<td>
 							<script language="javascript" type="text/javascript">
 								md5 = "<?php echo md5($basis['wvw']); ?>";
 							</script>
-							<input id="wvinput" type="text" size="10" name="wvw" autocomplete="off">
+							<input id="wvinput" type="text" size="7" name="wvw" autocomplete="off">
 							<img id="wvwimg" src="wv.php?rand=<?php echo rand(1, 1000000000); ?>" style="position: relative; top: 4px;" />
 						</td>
 					</tr>
 <?php
 	}
-	$showRep = (strlen($defreply) > 0) && (strcmp($defreply, "0") != 0)
-									   && (strlen($alert_msg) > 0);
+
+	$showRep = (strlen($defreply) > 0) && (strcmp($defreply, "0") != 0);
 ?>
 					<tr id="ComReplyTR"<?php echo $showRep?"":" style=\"display: none;\""; ?>>
-						<td>  Reply to Comment: </td>
+						<td> &emsp; &emsp; In reply to Comment: </td>
 						<td>
-							<span class="leaveReply" style="padding-right: 5px">
-								[<a href="#" id="viewComment"> View That </a>] &nbsp;
-								[<a href="#leaveComment" onclick="javascript:doReply('0');"> New Thread </a>]
+							<span class="leaveReply" style="padding-right: 50px; ">
+								[<a href="#" id="viewComment"> View </a>] &nbsp;
+								[<a href="#leaveComment" onClick="javascript:doReply('0');"> New One </a>]
 							</span>
-							<input id="cmntReply" type="text" size="4" name="reply" value="<?php echo $defreply; ?>">
+							<input id="cmntReply" type="text" size="3" name="reply" value="<?php echo $defreply; ?>">
 						</td>
 					</tr>
 
@@ -2223,7 +2233,7 @@ function write_firstPhoto() {
 						 echo ((stristr($_SERVER['HTTP_USER_AGENT'], "IE") == true)?
 						 "filter:alpha(opacity=".$basis['opac'].");":
 						 "-moz-opacity:".($basis['opac']/100).";"); ?>"
-						 onmouseover="javascript: LightenIt(this);" onmouseout="javascript: DarkenIt(this);">
+						 onmouseover="javascript: LightenIt(this);" onMouseOut="javascript: DarkenIt(this);">
 				<a title="Click to view larger size of &quot;<?php echo $photo['name']; ?>&quot;" href=".?p=<?php echo $pid; ?>">
 					<img src="<?php echo $imgAddress; ?>" <?php echo $wh; ?>/>
 				</a>
@@ -2329,7 +2339,7 @@ function textdate($d) {
 		case 7 :
 			return "one week ago";
 		default:
-			return date("F jS \o\f y", $udate);
+			return date("F jS", $udate)." of ".date("y", $udate);
 	}
 }
 
@@ -2485,7 +2495,7 @@ function order_draft_get_3($ppath) {
 }
 
 function GenerateDraftRequireds($ppath) {
-	set_time_limit(30);
+	@set_time_limit(30);
 	$txt = makeTheThumb($ppath, SKL_PHOTO_W, 'min', '1');
 	order_draft_get_3($ppath);
 	return $txt;

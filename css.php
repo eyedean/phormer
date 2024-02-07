@@ -118,21 +118,22 @@ form 					{ margin: 0px; }
 .ok_msg					{ color: <?php echo $s[1]; ?>; letter-spacing: 1px; text-align: center; background: <?php echo $s[9]; ?>; width: 80%; margin: 5px auto 15px; padding: 10px 15px; border: 3px double <?php echo $s[16]; ?>; }
 .ok_msg_inside			{ color: <?php echo $s[1]; ?>; text-align: justify; padding: 0px 10px 10px; border-left: 1px dashed #851; position: relative; top: 5px; left: 1px; }
 
-.Commenting				{ color: <?php echo $s[14]; ?>; text-align: justify; width: 85%; margin: 0px 30px 20px 0px; padding-top: 0px; line-height: 125%; }
+.Commenting				{ color: <?php echo $s[14]; ?>; text-align: justify; width: 87%; margin: 0px 0px 20px 20px; padding-top: 0px; line-height: 125%; float: left; }
 .Commenting a			{ color: <?php echo $s[5]; ?>; }
 .Commenting a:hover		{ color: #555; }
-.Commenting .title		{ color: <?php echo $s[15]; ?>; background: url('files/cssfiles/<?php echo $c; ?>_vbg1.jpg') bottom; padding: 15px 15px 25px; letter-spacing: 3px; font-size: 1.2em; text-align: left; margin: 0px; position: relative; top: 10px; }
-.Commenting .title a	{ color: <?php echo $s[15]; ?>; }
+.Commenting .title		{ color: <?php echo $s[15]; ?>; width: 100%; background: url('files/cssfiles/<?php echo $c; ?>_vbg1.jpg') bottom; padding: 15px 15px 25px; letter-spacing: 3px; font-size: 1.2em; text-align: left; margin: 0px; position: relative; top: 10px; }
+.Commenting .title a 	{ color: <?php echo $s[15]; ?>; }
 .Commenting table		{ text-align: left; margin-left: auto; margin-right: auto; }
 .Commenting input 		{ color: <?php echo $s[15]; ?>; border: 1px solid <?php echo $s[16]; ?>; padding: 1px 3px; font-size: 11px; font-family: tahoma, arial, helvetica, sans-serif; background: url('files/cssfiles/<?php echo $c; ?>_hbg0.jpg') left repeat-y; margin-top: 2px;}
 .Commenting textarea	{ color: <?php echo $s[15]; ?>; border: 1px solid <?php echo $s[16]; ?>; background: url('files/cssfiles/<?php echo $c; ?>_vbg0.jpg') top; padding: 2px 5px;  margin-top: 2px; }
 .Commenting .cell		{ position: relative; z-index: 10; padding: 10px 20px 5px; margin: 10px 0px 20px 0px; }
 .Commenting .under		{ position: absolute; z-index: 2; top: 5px; border: 0px solid red; height: 80px; width: 100%; background: url('files/cssfiles/<?php echo $c; ?>_vbg1.jpg') repeat-x bottom center; }
 .Commenting .bcell		{ background: <?php echo $s[0]; ?>; padding: 10px 20px 5px; margin: 10px 20px 20px; }
+.Commenting .bcell a	{ color: <?php echo $s[2]; ?>; }
 .Commenting blockquote 	{ color: <?php echo $s[15]; ?>; border-left: 1px dashed #C60; padding: 0px 20px 5px; margin: 5px 5px 10px 1px; line-height: 140%; }
 .Commenting blockquote.r{ color: <?php echo $s[15]; ?>; border-left-width: 0px; border-right: 1px dashed #C60; direction: rtl; padding: 0px 20px 5px; margin: 5px 5px 10px 1px; line-height: 140%; }
 .Commenting .head		{ position: relative; }
-.Commenting .bottitle	{ background: url('files/cssfiles/<?php echo $c; ?>_vbg0.jpg') top; padding: 0px 0px 30px; margin: 0px; position: relative; top: -20px; }
+.Commenting .bottitle	{ color: <?php echo $s[15]; ?>; width: 100%; background: url('files/cssfiles/<?php echo $c; ?>_vbg0.jpg') top; padding: 15px 15px 25px; margin: 0px; position: relative; top: -20px; }
 
 input					{ color: <?php echo $s[15]; ?>; border: 1px solid <?php echo $s[16]; ?>; font-family: tahoma, arial, sans-serif; background: url('files/cssfiles/<?php echo $c; ?>_hbg0.jpg') left repeat-y; padding: 1px 3px; }
 input.checkBox			{ background: <?php echo $s[0]; ?>; border: 1px solid #000000; }
@@ -157,7 +158,8 @@ input.checkBox			{ background: <?php echo $s[0]; ?>; border: 1px solid #000000; 
 .thumb_not_found		{ color: black; width: 75px; height: 75px; border: 1px solid black; }
 a.q, label 				{ cursor: pointer; }
 input.radio				{ border-width: 0px; position: relative; top: 2px; }
-.leaveReply				{ float: right; padding-top: 2px; font-size: 11px; letter-spacing: 0px; }
+.leaveReply				{ float: right; position: relative; padding-top: 2px; font-size: 11px; letter-spacing: 0px; }
 
 #ss_title				{ font-size: 1.2em; font-weight: bold; }
 #ss_photo				{ border: 1px solid <?php echo $s[7]; ?>; }
+#wvwimg					{ position: relative; top: 5px; margin-top: -5px;}

@@ -156,14 +156,20 @@ function SaveRating(pid, rate) {
 	makeRequest("./?cmd=rate&p="+pid+"&rate="+rate+"&r="+Math.round(Math.random()*100000)); // to avoid unwanted caching
 }
 
-function prepareBody() {
-	try {
-		reToggleInfo();
-	} catch(e) {}
+function updateWV() {
+	if (isAjaxing)
+		return;
 	try {
 		isAjaxing = true;
 		makeRequest("./?cmd=wvcheck&md5="+md5.substr(0, 20)+"&r="+Math.round(Math.random()*100000)); // to avoid unwanted caching
 	} catch(e) {}
+}
+
+function prepareBody() {
+	try {
+		reToggleInfo();
+	} catch(e) {}
+	updateWV();
 }
 
 function confirmDelete(x) {
@@ -199,9 +205,12 @@ function tableRowElem(x) {
 }
 
 function checkWV() {
+	if (dg('ComIsAdminYe') && dg('ComIsAdminYe').checked)
+		return true;
+
 	re = /^\d{5}$/;
 	if (! re.test(dg('wvinput').value)) {
-		alert('Word Verification box should have an string of length 5 with digits');
+		alert('Word Verification box should contain 5 digits!');
 		return false;
 	}
 	if (dg('cmntTextArea').value.length == 0) {

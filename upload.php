@@ -79,10 +79,11 @@ function AddSingleFile($theFile) {
 		$fw = fopen($ppath, "w");
 		while ($data = fread($fr, 4096))
 			fwrite($fw, $data);
+		fclose($fw);
 	}
 	else
 		copy($wer, $ppath);
-
+	chmod($ppath, 0644);
 
 	if ($isZip) {
 		$zip_msg = "";
@@ -198,7 +199,7 @@ function AddSingleFile($theFile) {
 			}
 			else
 				$txt = "ENDED;;";
-			$r = $txt.";".($isDir?substr($theFile, 0, -1):$file_name);
+			$r = $txt.";".($isDir?substr($theFile, 0, -1):$file_name).";".$ppath;
 			if ($isDraft)
 				$r .= ";".$bpath;
 			if ($isDraft && ($isZip || $isDir))
@@ -225,13 +226,10 @@ function AddSingleFile($theFile) {
 				}
 			}
 			$ext = $isZip?"zip":"jpg";
-			if ($isDraft||1) {
-				$b = substr($file_name, 0, -4)."_9.".$ext;
-				for ($n=""; file_exists("temp/".$b); $b = "_".$b)
-					;
-				$bpath = "temp/".$b;
-				$ppath = $bpath;
-			}
+			$b = substr($file_name, 0, -4)."_9.".$ext;
+			while (file_exists("temp/".$b))
+				$b = "_".$b;
+			$ppath = $bpath = "temp/".$b;
 
 			$v = array();
 			write_in_phr("START;");
@@ -266,6 +264,7 @@ function AddSingleFile($theFile) {
 		}
 		else
 			dieForward("ERROR: Not a valid upload type");
+		chmod($ppath, 0644);
 
 		dieAlert("The file \"$file_name\" <a href=\"$ppath\">uploaded</a> succesfully!");
 	}

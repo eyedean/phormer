@@ -210,6 +210,7 @@ function writeYet(seed, draft) {
 			s =	"The photo \""+FileName+"\" is uploaded successfully "
 				+" and is <a href=\""+ImgPath9+"\">saved</a> in <a href=\"admin.php?page=drafts\">Drafts</a> part!";
 		dg('upload_note_'+seed).innerHTML = s;
+		//alert('!' + AjaxTkn[3]+'!'+ImgPath9);
 		if (!draft)
 			imageUploaded(1, seed);
 		Ajaxify("delphr", seed);
