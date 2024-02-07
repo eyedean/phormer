@@ -1,6 +1,37 @@
 <?php
-define("PHORMER_VERSION", "3.33");
-define("PHORMER_BUILD_DATE", "12th April, 2008");
+/*
+CHANGE LOG:
+- 2009/02/01: Fixed showing private photos in RSS [by adding ispublic function instead of canthumb].
+ */
+
+	/* TRANSLATION */
+	$KNOWN_LANGS = array('en', 'fr', 'it', 'sk', 'fa'); 
+	define("LANG_DIR", "lang/");
+	$global_language = 'en';
+	$_ = array();
+
+	// __, just returns translation (as PHP's _)
+	function __($s) {
+		global $_;
+
+		$ls = strtolower($s);
+		$tran = (isset($_[$ls])) ? $_[$ls] : $s;
+		return $tran;
+	}
+		
+	// __w, prints the translation (also may add text adjustments like dir=RTL
+	function __w($s, $adddir = true) { // $adddir, adds directoin to save RTL script
+		global $global_language;
+		
+		$tran = __($s);
+		if (strcmp($global_language, 'fa') == 0 && $adddir)
+			$tran = "<span dir=\"ltr\"> </span><span dir=\"rtl\">$tran</span> <span dir=\"ltr\"> </span>";
+		echo $tran;
+	}
+?>
+<?php
+define("PHORMER_VERSION", "3.31");
+define("PHORMER_BUILD_DATE", "13th Jan. 2007");
 define("DEBUG_MODE", 0);
 #define("ZIP_OPEN_PATH", 'n:\aideen\php\phormer\temp\\'); // DO NOT FORGET FINAL \ (or /) of (temp\)
 
@@ -87,7 +118,8 @@ function getHelp($s, $c = "#789") {
 	global $basis;
 	if (!isset($basis['helplang']) || strcmp($basis['helplang'], 'off')==0)
 		$basis['helplang'] = 'en';
-	return "&nbsp;<span style=\"color: $c\">(<a class=\"q\" onclick=\"ShowHelp('$s', event, '{$basis['helplang']}');\"> ? </a>)</span>\n";
+	$trans = __($s);
+	return "&nbsp;<span style=\"color: $c\">(<a class=\"q\" onclick=\"ShowHelp('$s', event, '{$basis['helplang']}', '$trans');\"> ? </a>)</span>\n";
 }
 
 function writeHelp($s, $c = "#789") {
@@ -463,6 +495,13 @@ function parse_container($parse_infoName, $p_each, $xmlfile, $fix = true) {
 	/***** END OF ESCAPE CHARACTERS FIXATIONS *****/
 }
 
+function report_admin($s) {
+	if (! ($fout = fopen("report.txt","a+")) )
+		die("Couldn't open report.txt for writing.");
+	fputs($fout, "@ ".date("D M j G:i:s T Y")." : ".$s." \r\n");
+	fclose($fout);
+}
+
 function save_container($parse_infoName, $p_each, $xmlfile) {
 	global $$parse_infoName;
 	$parse_info =& $$parse_infoName;
@@ -489,53 +528,58 @@ function save_container($parse_infoName, $p_each, $xmlfile) {
 					$parse_info['links'][$key][$name] = htmlspecialchars($item, ENT_QUOTES, "UTF-8");
 	}
 	/***** END OF ESCAPE CHARACTERS FIXATIONS *****/
-
-	$tempfile = "temp/".strtotime("now")."_".random_string()."_".str_replace("/", "_", $xmlfile);
-
-	if (! ($fout = fopen($tempfile,"w")) )
-		die("Couldn't open $tempfile for writing.");
-	fputs($fout,"<?xml version='1.0' encoding='UTF-8' ?>\n");
-	fputs($fout,"<Xmldata>\n");
+	$s = "";
+	$s .= ("<?xml version='1.0' encoding='UTF-8' ?>\n");
+	$s .= ("<Xmldata>\n");
 	reset($parse_info);
 	while (list($key, $value) = each($parse_info)) {
 		if (is_array($value)) {
 			if (strcmp($p_each, "Basis") == 0) {
 				reset($parse_info[$key]);
 				while (list($inkey,$invalue) = each($parse_info[$key]))
-					fputs($fout,"\t<link href=\"${invalue['href']}\" title=\"${invalue['title']}\">${invalue['name']}</link>\n");
+					$s .= ("\t<link href=\"${invalue['href']}\" title=\"${invalue['title']}\">${invalue['name']}</link>\n");
 			}
 			else {
-				fputs($fout,"\t<".$p_each." id=\"$key\">\n");
+				$s .= ("\t<".$p_each." id=\"$key\">\n");
 				reset($parse_info[$key]);
 				while (list($inkey,$invalue) = each($parse_info[$key])) {
 					if (ctype_lower($inkey)) {
 						if (is_array($invalue))
 							while (list($ininkey, $ininvalue) = each($parse_info[$key][$inkey]))
-								fputs($fout,"\t\t<$inkey><![CDATA[$ininvalue]]></$inkey>\n");
+								$s .= ("\t\t<$inkey><![CDATA[$ininvalue]]></$inkey>\n");
 						else
-							fputs($fout,"\t\t<$inkey><![CDATA[$invalue]]></$inkey>\n");
+							$s .= ("\t\t<$inkey><![CDATA[$invalue]]></$inkey>\n");
 					}
 					else {
 						if (strcmp($p_each, "Visit") == 0)
-							fputs($fout,"\t\t<visitor id=\"$inkey\"><![CDATA[".$invalue."]]></visitor>\n");
+							$s .= ("\t\t<visitor id=\"$inkey\"><![CDATA[".$invalue."]]></visitor>\n");
 					}
 				}
-				fputs($fout,"\t</".$p_each.">\n");
+				$s .= ("\t</".$p_each.">\n");
 			}
 		}
 		else {
 			if (!is_int($key) && ctype_lower($key))
-				fputs($fout,"\t<$key><![CDATA[$value]]></$key>\n");
+				$s .= ("\t<$key><![CDATA[$value]]></$key>\n");
 			else if ((strcmp($p_each, "Photo") == 0) && is_int($key))
-				fputs($fout,"\t<Photo id=\"$key\"><![CDATA[".$value."]]></Photo>\n");
+				$s .= ("\t<Photo id=\"$key\"><![CDATA[".$value."]]></Photo>\n");
 		}
 	}
-	fputs($fout,"</Xmldata>\n");
+	$s .= ("</Xmldata>\n");
+	
+	$tempfile = "temp/".strtotime("now")."_".random_string()."_".str_replace("/", "_", $xmlfile);
+
+	if (! ($fout = fopen($tempfile,"w")) )
+		die("Couldn't open $tempfile for writing.");
+	fputs($fout, $s);
 	fclose($fout);
 
 	/* This action is supposed to guarentee synchronizations! */
-	if (!copy($tempfile, $xmlfile))
-		die("couldn't copy $tempname to $xmlfile.");
+	@unlink($xmlfile);
+	if (!copy($tempfile, $xmlfile) || 0) {
+		report_admin("couldn't copy ".$tempfile." to ".$xmlfile.".");
+		die("couldn't copy ".$tempfile." to ".$xmlfile.".");
+	}
 	@unlink($tempfile);
 
 	parse_container($parse_infoName, $p_each, $xmlfile, false);
@@ -1008,7 +1052,7 @@ function build_rss() {
 		$n = min($neck, $nphotos);
 
 		for ($i=0; ($i<$n) && (strcmp(key($photos), 'lastpid') != 0);) {
-			if (canthumb(key($photos))) {
+			if (ispublic(key($photos))) {
 				$i++;
 				$pid = key($photos);
 				$photo = getAllPhotoInfo($pid);
@@ -1210,8 +1254,8 @@ function write_radio_list($desc, $hName, $fi, $values, $valNames) {
 								<a name="<?php echo $sl_desc; ?>"></a>
 								<span class="dot">&#149;</span><b><?php echo $desc; ?></b>
 								<?php writeHelp($hName); ?>:
-							</td><td>
-								&nbsp;&nbsp;
+							</td><td style="padding-left: 20px">
+								
 <?php
 	global $basis;
 	if (!isset($basis[$fi]))
@@ -1226,6 +1270,13 @@ function write_radio_list($desc, $hName, $fi, $values, $valNames) {
 ?>
 							</td></tr>
 <?php
+}
+
+// Navigation bars, back to main
+function write_nav2main($toadminpage = true) { 
+	echo ' 		<div class="back2mainR"><a target="_blank" href=".">&nbsp;View Gallery &gt;&gt; </a></div>'."\n";
+	if ($toadminpage) 
+		echo '		<div class="back2main"><a href="?">&lt;&lt; Admin Page</a></div>'."\n";
 }
 
 function write_conts($contarr, $contName) {
@@ -1482,7 +1533,7 @@ function writeNextz($p) {
 		$targ = "_blank";
 	for ($i=0; $i<4; $i++) {
 		$rp = rand(0, $nc-1);
-		while (!canthumb($arr[$rp]))
+		while (!canthumb($arr[$rp]) && $nc != 0)
 			$rp = ($rp+1)%$nc;
 		if ($nc > 4)
 			for ($j=0; $j<$i; $j++)
@@ -1647,6 +1698,8 @@ function writeCommenting($t, $c) {
 		if (strcmp($key, "lastiid") != 0)
 			if (strcmp($val['owner'], $own) == 0) {
 				$val['reply'] = (!isset($val['reply']))?0:($val['reply']+0);
+				if (!isset($comments[$val['reply']])) // BUG FIX: the replied comment might be deleted : )
+					$val['reply'] = 0; 
 				$r[$key] = $val;
 				$r[$key]['childs'] = array();
 			}
@@ -1953,7 +2006,7 @@ function write_boxPhotos() {
 		<?php
 			end($photos);
 			$arr = array();
-			for ($i=0; ($i < $nphotos) && ($i < $neck); prev($photos))
+			for ($i=0; ($i < $nphotos) && ($i < $neck) && (current($photos) !== FALSE); prev($photos))
 				if ((strcmp(key($photos), 'lastpid') != 0) && canthumb(key($photos))) {
 					array_push($arr, key($photos));
 					$i++;
@@ -2192,7 +2245,7 @@ function write_belowIndex($func, $obj_name) {
 function write_firstPhoto() {
 	global $photos, $nphotos, $basis, $stories, $_SERVER, $hasgd;
 	end($photos);
-	while (!canthumb(key($photos)))
+	while (!canthumb(key($photos)) && current($photos))
 		prev($photos);
 	$pid = key($photos);
 	$photo = getAllPhotoInfo($pid);
@@ -2259,9 +2312,10 @@ function write_lastPhotos() {
 			<span class="reddot">&#149;</span>Recently Added Photos
 			<span class="thumbcntarr">
 			<?php
+			
 				global $thumbCntArr;
 				for($i=0; $i<count($thumbCntArr); $i++)
-					echo "\t\t\t&nbsp;[<a href=\".?rpn=".$thumbCntArr[$i].($rps == 0?"":"&rps=$rps")."\">".$thumbCntArr[$i]."</a>]\n"
+					echo "\t\t\t&nbsp;[<a href=\".?rpn=".$thumbCntArr[$i].($rps == 0?"":"&rps=$rps")."\">".$thumbCntArr[$i]."</a>]\n";
 			?>
 			</span>
 		</div>
@@ -2269,13 +2323,13 @@ function write_lastPhotos() {
 		<?php
 			end($photos);
 			$rpn = min($rpn, $nphotos);
-			for ($i=0; $i<$rps; $i++)
+			for ($i=0; $i<$rps && (current($photos)); $i++)
 				prev($photos);
-
-			for ($i=0; ($i<$rpn) && (strcmp(key($photos), 'lastpid') != 0);) {
+				
+			for ($i=0; ($i<$rpn) && (current($photos)) && (strcmp(key($photos), 'lastpid') != 0);) {
 				if (thumbBox(key($photos)))
 					$i++;
-				prev($photos);
+				if (prev($photos) == FALSE) break;
 			}
 		?>
 		</div>
@@ -2315,6 +2369,18 @@ function checkThePass($conChar, $contId) {
 	if (isset($_COOKIE['pass_'.$conChar.$contId]) && (strcmp($_COOKIE['pass_'.$conChar.$contId], md5($thePass)) == 0))
 		return true;
 	return false;
+}
+
+function ispublic($pid) {
+	global $categs, $stories;
+	if (!photo_exists($pid))
+		return false;
+	$photo = getAllPhotoInfo($pid);
+	if (strlen($categs[$photo['categ']]['pass']) != 0)
+		return false;
+	if (strlen($stories[$photo['story']]['pass']) != 0)
+		return false;
+	return true;
 }
 
 function canthumb($pid) {
@@ -2507,7 +2573,7 @@ function GenerateAddPhotoRequired($ppath, $gen3) {
 	if (!$hasgd)
 		return;
 
-	set_time_limit(30);
+	@set_time_limit(30);
 
 	list($imgW, $imgH) = getimagesize($ppath);
 	$zer = 0;

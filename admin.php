@@ -208,8 +208,19 @@
 	$afterfirsttime = isset($_GET['firsttime']);
 	$noheader = $afterfirsttime; // ||
 	if (!$noheader) {
+		if (!isset($basis['helplang']) || strcmp($basis['helplang'], 'off')==0)
+			$basis['helplang'] = 'en';
+		$global_language = $basis['helplang'];
+		// it might be current page!
+		if (isset($_POST['helplang']))
+			$global_language = $_POST['helplang'];
+		if (! in_array($global_language, $KNOWN_LANGS)) 
+			$global_language = 'en';
+		include_once(LANG_DIR.$global_language.".php");
+
+	
 	switch($page) {
-		case 'photos':		$pageNameTitle = "Manage Photos"; 			break;
+		case 'photos':		$pageNameTitle = __("Manage Photos"); 			break;
 		case 'categories':	$pageNameTitle = "Manage Categories"; 		break;
 		case 'stories':		$pageNameTitle = "Manage Stories"; 			break;
 		case 'comments':	$pageNameTitle = "Manage Comments"; 		break;
@@ -226,17 +237,10 @@
 		default: 			$pageNameTitle = "Administration Region"; 	break;
 	}
 	if (isset($basis['pgname']))
-		$pageNameTitle .= " of ".$basis['pgname'];
+		$pageNameTitle .= " ".__("of")." ".$basis['pgname'];
 	$headName = isset($basis['pgname'])?$basis['pgname']:"PhotoGallery";
 	if (page_is('basis') && isset($_POST['pgname']))
-		$headName = $_POST['pgname'];
-	if (!isset($basis['helplang']) || strcmp($basis['helplang'], 'off')==0)
-		$basis['helplang'] = 'en';
-	
-	$lang = $basis['helplang'];
-	// it might be current page!
-	if (isset($_POST['helplang']))
-		$lang = $_POST['helplang'];
+		$headName = $_POST['pgname'];		
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
@@ -245,12 +249,8 @@
 	<link rel="stylesheet" type="text/css" href="files/adminfiles/admin.css">
 	<script type="text/javascript" language="javascript" src="files/adminfiles/admin.js"></script>
 	<script type="text/javascript" language="javascript" src="files/adminfiles/skeleton.js"></script>
-	<?php if ($lang == 'en') { ?><script type="text/javascript" language="javascript" src="files/adminfiles/help_en.js"></script><?php } ?>
-	<?php if ($lang == 'fr') { ?><script type="text/javascript" language="javascript" src="files/adminfiles/help_fr.js"></script><?php } ?>
-	<?php if ($lang == 'it') { ?><script type="text/javascript" language="javascript" src="files/adminfiles/help_it.js"></script><?php } ?>
-	<?php if ($lang == 'sk') { ?><script type="text/javascript" language="javascript" src="files/adminfiles/help_sk.js"></script><?php } ?>
-	
-	<script type="text/javascript" language="javascript" src="files/adminfiles/help.js"></script>
+	<script type="text/javascript" language="javascript" src="files/adminfiles/help_<?php echo $global_language; ?>.js"></script>
+	<script type="text/javascript" language="javascript" src="files/adminfiles/helpsystem.js"></script>
 	<title><?php echo $pageNameTitle; ?></title>
 <?php
 	if (isset($basis['icon']) && strlen($basis['icon'])) {
@@ -270,7 +270,7 @@ onblur="javascript:blured=true;" onfocus="javascript:if(blured){try{dg('loginAdm
 			<tr><td colspan="2" rowspan="2" style="background-color: #F9F9F9; ">
 				<div class="fieldCont" <?php if (!IsIE()) echo 'style="margin-bottom: -1px;"'; ?>>
 					<fieldset>
-						<legend><span id="helpBoxLegend"></span>
+						<legend><span id="helpBoxLegend" dir="rtl"></span>
 							&nbsp;<a onclick="HideHelp();">[Dismiss]</a>
 						</legend>
 						<div id="helpBoxInner"></div>
@@ -322,7 +322,7 @@ onblur="javascript:blured=true;" onfocus="javascript:if(blured){try{dg('loginAdm
 ?>
 
 
-		<div class="back2mainR"><a target="_blank" href=".">&nbsp;View Gallery &gt;&gt; </a></div>
+<?php 	write_nav2main(false); ?>
 		<div class="clearer"></div>
 		<div class="part" style="margin-top: 18px;">
 			<div class="title">
@@ -398,7 +398,7 @@ onblur="javascript:blured=true;" onfocus="javascript:if(blured){try{dg('loginAdm
 
 	if (page_is('wrong')) {
 ?>
-		<div class="back2mainR"><a target="_blank" href=".">&nbsp;View Gallery &gt;&gt; </a></div>
+<?php 	write_nav2main(); ?>
 		<div class="clearer" style="margin-top: 20px;"></div>
 <?php
 		$last_ver = GetLastPhormerVersion();
@@ -493,8 +493,7 @@ onblur="javascript:blured=true;" onfocus="javascript:if(blured){try{dg('loginAdm
 		}
 
 ?>
-		<div class="back2mainR"><a target="_blank" href=".">&nbsp;View Gallery &gt;&gt; </a></div>
-		<div class="back2main"><a href="?">&lt;&lt; Admin Page</a></div>
+<?php 	write_nav2main(); ?>
 		<div class="clearer" style="margin-top: 27px;"></div>
 		<?php
 			if (strlen($ok_msg))
@@ -653,8 +652,7 @@ if (page_is('doneoutside')) {
 		}
 		$defAdd = ((strlen($theSrc)>0) && (strlen($alert_msg) == 0))?$theSrc:"data/categories.xml";
 ?>
-		<div class="back2mainR"><a target="_blank" href=".">&nbsp;View Gallery &gt;&gt; </a></div>
-		<div class="back2main"><a href="?">&lt;&lt; Admin Page</a></div>
+<?php 	write_nav2main(); ?>
 		<div class="part">
 			<div class="title"><a style="color: white" href="?page=editxml">XML Editor:</a></div>
 			<div class="inside">
@@ -833,8 +831,7 @@ $field_sep = "\t\t\t\t\t\t<tr><td colspan=\"2\"><div class=\"basisTitleHR\">&nbs
 if (page_is('basis')) {
 		$disp = "style=\"display:".($afterInstall?"none":"table-row")."\" ";;
 ?>
-		<div class="back2mainR"><a target="_blank" href=".">&nbsp;View Gallery &gt;&gt; </a></div>
-		<div class="back2main"><a href="?">&lt;&lt; Admin Page</a></div>
+<?php 	write_nav2main(); ?>
 		<div class="part">
 			<div class="title"><a style="color: white" href="?page=basis">Preferences:</a></div>
 			<div class="inside">
@@ -1013,18 +1010,17 @@ if (page_is('configs')) {
 	if (!isset($basis['copyright']))
 		$basis['copyright'] = DEFAULT_COPYRIGHT;
 ?>
-		<div class="back2mainR"><a target="_blank" href=".">&nbsp;View Gallery &gt;&gt; </a></div>
-		<div class="back2main"><a href="?">&lt;&lt; Admin Page</a></div>
+<?php 	write_nav2main(); ?>
 		<div class="part">
-			<div class="title"><a style="color: white" href="?page=configs">Configurations:</a></div>
+			<div class="title"><a style="color: white" href="?page=configs"><?php __w("Configurations"); ?>:</a></div>
 			<div class="inside">
 				<div class="method">
-					<span class="name">External Modular Actions
+					<span class="name"><?php __w('External Modular Actions', $adddir = false); ?>
 					<?php writeHelp("Modular Actions"); ?>:</span><br />
 					<div style="padding: 5px 50px; color: #666; line-height: 200%;">
-						<span class="dot">&#149;</span><img width="20px" height="20px" class="logo" src="files/adminfiles/logo_lock.gif" /><a href="?page=changepass">Change Password</a>
+						<span class="dot">&#149;</span><img width="20px" height="20px" class="logo" src="files/adminfiles/logo_lock.gif" /><a href="?page=changepass"><?php __w('Change Password'); ?></a>
 							<?php writeHelp("Change Password"); ?><br />
-						<span class="dot">&#149;</span><img width="20px" height="20px" class="logo" src="files/adminfiles/logo_death.gif" /><a href="?page=uninstall">Uninstall Phormer</a>
+						<span class="dot">&#149;</span><img width="20px" height="20px" class="logo" src="files/adminfiles/logo_death.gif" /><a href="?page=uninstall"><?php __w('Uninstall Phormer'); ?></a>
 							<?php writeHelp("Uninstall Phormer"); ?><br />
 						<!--
 						<br />
@@ -1042,7 +1038,7 @@ if (page_is('configs')) {
 				<br style="margin-top: 5px;" />
 
 				<div class="method">
-					<span class="name">Advanced Options:</span><br />
+					<span class="name"><?php __w("Advanced Options", $adddir= false); ?>:</span><br />
 					<form enctype="multipart/form-data" method="post" action="?page=configs&cmd=save<?php if (isset($firsttime) && ($firsttime)) echo "&firsttime=true"; ?>">
 					<center>
 						<br />
@@ -1050,12 +1046,12 @@ if (page_is('configs')) {
 						<center><input class="submit" type="submit" value="Save Changes"></input></center>
 						<br />
 
-						<table width="80%" cellspacing="0" cellpadding="2" style="text-align: left; position: relative; top: -10px;">
+						<table width="90%" cellspacing="0" border="0" cellpadding="2" style="text-align: left; position: relative; top: -10px;">
 
 							<?php echo $field_sep; ?>
 
-							<tr><td valign="top">
-								<span class="dot">&#149;</span><b>Default Num of Photos in Box Mode</b>
+							<tr><td valign="top" width="55%">
+								<span class="dot">&#149;</span><b><?php __w("Default Num of Photos in Box Mode"); ?></b>
 								<?php writeHelp("Default Photo Num in Box"); ?>:
 							</td><td>
 								&nbsp;&nbsp;
@@ -1072,7 +1068,7 @@ if (page_is('configs')) {
 								</select>
 							</td></tr>
 							<tr><td valign="top">
-								<span style="padding-left: 53px;"></span> <b>Photos in Recent Photos</b>
+								 <span class="dot">&#149;</span> <b><?php echo __w("Default Num of Photos in Recent Photos"); ?></b>
 								<?php writeHelp("Default Photo Num in Recents"); ?>:
 							</td><td>
 								&nbsp;&nbsp;
@@ -1089,7 +1085,7 @@ if (page_is('configs')) {
 								</select>
 							</td></tr>
 							<tr><td valign="top">
-								<span style="padding-left: 53px;"></span> <b>Photos in Top Rated/Visited</b>
+								<span class="dot">&#149;</span> <b><?php echo __w("Default Num of Photos in Top Rated/Visited"); ?></b>
 								<?php writeHelp("Default Photo Num in Tops"); ?>:
 							</td><td>
 								&nbsp;&nbsp;
@@ -1106,7 +1102,7 @@ if (page_is('configs')) {
 								</select>
 							</td></tr>
 							<tr><td valign="top">
-								<span style="padding-left: 53px;"></span> <b>Stories in Story mode</b>
+								<span class="dot">&#149;</span> <b><?php echo __w("Default Num of Stories in Story mode"); ?></b>
 								<?php writeHelp("Default Story Num in mode"); ?>:
 							</td><td>
 								&nbsp;&nbsp;
@@ -1123,7 +1119,7 @@ if (page_is('configs')) {
 								</select>
 							</td></tr>
 							<tr><td valign="top">
-								<span style="padding-left: 53px;"></span> <b>Stories in Sidebar</b>
+								<span class="dot">&#149;</span> <b><?php echo __w("Default Num of Stories in Sidebar"); ?></b>
 								<?php writeHelp("Default Story Num in Sidebar"); ?>:
 							</td><td>
 								&nbsp;&nbsp;
@@ -1185,8 +1181,8 @@ if (page_is('configs')) {
 								echo $field_sep;
 
 								write_radio_list("Help System Language", 'Help System',
-												 'helplang', array('en', 	  'fr', 	'sk', 		'it', 		'off'),
-															 array('English', 'French', 'Slovak', 	'Italian', 	"None"));
+												 'helplang', array('en', 	  'fa',		'fr', 	'sk', 		'it', 		'off'),
+															 array('English', 'Persian','French', 'Slovak', 	'Italian', 	"None"));
 
 								echo $field_sep;
 
@@ -1295,8 +1291,7 @@ if (page_is('configs')) {
 
 if (page_is('changepass')) {
 ?>
-		<div class="back2mainR"><a target="_blank" href=".">&nbsp;View Gallery &gt;&gt; </a></div>
-		<div class="back2main"><a href="?">&lt;&lt; Admin Page</a></div>
+<?php 	write_nav2main(); ?>
 		<div class="part">
 			<div class="title"><a style="color: white" href="?page=changepass">Change Password:</a></div>
 			<div class="inside">
@@ -1375,8 +1370,8 @@ if (page_is('comments')) {
 	$st = max($st, 0);
 	$st = min($st, count($comments)-1);
 ?>
-		<div class="back2mainR"><a target="_blank" href=".">&nbsp;View Gallery &gt;&gt; </a></div>
-		<div class="back2main"><a href="?">&lt;&lt; Admin Page</a></div>
+<?php 	write_nav2main(); ?>
+
 		<div class="part">
 			<div class="title"><a style="color: white" href="?page=comments">Manage Comments:</a></div>
 			<div class="inside">
@@ -1490,8 +1485,7 @@ if (page_is('drafts')) { ?>
 	$doUpload = strcmp($cmd, 'doUpload') == 0;
 	$gooddate = date("Y/m/d H:i", GetTimeWithDiffer());
 ?>
-		<div class="back2mainR"><a target="_blank" href=".">&nbsp;View Gallery &gt;&gt; </a></div>
-		<div class="back2main"><a href="?">&lt;&lt; Admin Page</a></div>
+<?php 	write_nav2main(); ?>
 <?php if ($doUpload) { ?>
 		<div class="clearer" style="margin-top: 15px;"> </div>
 		<div class="back2main"><span style="padding-left: 13px; "></span><a href="?page=drafts"><< Manage Drafts</a></div>
@@ -1839,7 +1833,7 @@ if (page_is('drafts')) { ?>
 			}
 			else if ($isAdd || $isEdt) {
 				if (!isset($_POST['name']))
-					$alert_msg = "No Name! You shall come here from administration page only!";
+					$alert_msg = "No Name! You should come here from administration page only!";
 				else {
 					if ($isEdt) {
 						parse_container('photo', '', $xmlfile);
@@ -2018,8 +2012,7 @@ if (page_is('drafts')) { ?>
 			var hasexif = <?php echo $hasexif; ?>;
 		</script>
 
-		<div class="back2mainR"><a target="_blank" href=".">&nbsp;View Gallery &gt;&gt; </a></div>
-		<div class="back2main"><a href="?">&nbsp;&nbsp;&lt;&lt; Admin Page&nbsp;&nbsp;&nbsp;</a></div>
+<?php 	write_nav2main(); ?>
 		<noscript>
 			<br />
 			<div class="method"><div class="note_invalid">Please activate javascript for the proper performance.</div></div>

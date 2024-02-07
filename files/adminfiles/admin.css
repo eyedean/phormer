@@ -3,13 +3,13 @@ body		{ background: snow; margin:0px; font-family: verdana, sans-serif; }
 #Granny		{ width: 760px; font-size: 11px; }
 a		{ color: #03C; text-decoration: none; }
 a img		{ border: 1px solid #123; }
-img.logo	{ border-width: 0px; position: relative; top: 5px; margin-right: 10px; }
+img.logo	{ border-width: 0px; position: relative; top: 5px; padding-right: 10px; }
 a:hover		{ color: #FF6600; }
 #headerBar	{ font-family: verdana; font-size: 11px; letter-spacing: 2px; background: #9AB; color: snow; border: 3px double white; margin: 20px 0px 20px; padding: 15px 20px 15px 45px; text-align: left; }
 .topHeadAround	{ font-size: 0.8em; color: #C30; font-style: normal; padding-right: 10px;  }
 .VeryTitle	{ font-family: georgia; letter-spacing: 0px; font-style: italic; font-size: 40px; line-height: 125%; color: black; padding-right: 20px; }
 .shortCuts	{ background: #E8F0F8; text-align: center; border: 1px solid #ABC; border-top-width: 0px; margin: -22px 150px -1em; padding: 0px 0px 1px;}
-.shortCuts img	{ position: relative; top:  1px; margin: 0px 5px; }
+.shortCuts img	{ position: relative; top:  1px; margin: 0px 5px; padding: 0px; }
 .shortCuts span	{ position: relative; top: -5px; padding: 0px 30px 0px 20px; color: #ABC; }
 
 .back2main	{ margin: 0px 2px; text-align: left; }

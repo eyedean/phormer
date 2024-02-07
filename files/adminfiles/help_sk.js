@@ -12,7 +12,7 @@ function GetSkHelpMsg(s) {
 		case "help":    //Aide 
 			r = "Toto je Pomocník pre Phormer!<br />"
 			//r = "This is the new Help feature of Phormer!<br />"	
-				+ "&nbsp; Nájdeš tu užitočné informácie o každej položke/menu po \
+				+ "&nbsp; Nájdeš tu užitočné informácie o každej položke/menu po "
 				+	"kliknutí na otáznik (<a class=\"q\">?</a>) za položkou.<br />"
 			    	//+ "&nbsp; You'll find useful information about each item/menu by \
 					//clicking on the question mark (<a class=\"q\">?</a>) next to the item.<br />"
