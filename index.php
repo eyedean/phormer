@@ -75,7 +75,7 @@
 
 	$feat =	(isset($_GET['feat']))?$_GET['feat']:"";
 
-	$QS = $_SERVER['QUERY_STRING'] ?? '';
+	$QS = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '';
 	if (($p == -1)	&&	($c == -1)	&&	($s == -1)	&&	($u == -1)	&&	($j == -1) && ($jj == -1)
 		&& (strlen($QS) > 0) && (strpos($QS, "=") === FALSE)) {
 		$u = $QS;

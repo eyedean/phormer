@@ -452,6 +452,17 @@ function parse_container($parse_infoName, $p_each, $xmlfile, $fix = true) {
 	if (!($fp = fopen($xmlfile,"r")))
 		die ("Could not open $xmlfile for reading.");
 
+	/*
+	 * FIX for race condition bug (2024):
+	 * Acquire shared lock while reading to ensure we don't read a partially written file.
+	 * LOCK_SH allows multiple readers but blocks during writes.
+	 */
+	$lockfile = $xmlfile . '.lock';
+	$lock_handle = @fopen($lockfile, 'c');
+	if ($lock_handle !== false) {
+		flock($lock_handle, LOCK_SH); // Shared lock for reading
+	}
+
 	while (($data = fread($fp,4096)))
 		if (!xml_parse($xmlParser,$data,feof($fp)))
 			die($xmlfile.":"
@@ -460,6 +471,12 @@ function parse_container($parse_infoName, $p_each, $xmlfile, $fix = true) {
 					."<br />\n<a href=\"admin.php?page=editxml&ignore=all\">Restore last back-up</a> is suggested.");
 
 	fclose($fp);
+	
+	// Release shared lock
+	if ($lock_handle !== false) {
+		flock($lock_handle, LOCK_UN);
+		fclose($lock_handle);
+	}
 	xml_parser_free($xmlParser);
 
 	$parse_info =& $$parse_infoName;
@@ -568,20 +585,57 @@ function save_container($parse_infoName, $p_each, $xmlfile) {
 	}
 	$s .= ("</Xmldata>\n");
 	
-	$tempfile = "temp/".strtotime("now")."_".random_string()."_".str_replace("/", "_", $xmlfile);
+	/*
+	 * FIX for race condition bug (2024):
+	 * Use atomic rename() instead of unlink()+copy() and add file locking.
+	 * This prevents the corruption where shorter content overwrites longer content
+	 * without truncating the file when two processes write simultaneously.
+	 */
+	
+	// Create unique temp file
+	$tempfile = "temp/".strtotime("now")."_".random_string()."_".getmypid()."_".str_replace("/", "_", $xmlfile);
 
-	if (! ($fout = fopen($tempfile,"w")) )
+	if (! ($fout = fopen($tempfile, "w")) )
 		die("Couldn't open $tempfile for writing.");
+	
+	// Write to temp file (this is safe, unique filename per process)
 	fputs($fout, $s);
+	fflush($fout); // Ensure all data is written to disk
 	fclose($fout);
-
-	/* This action is supposed to guarentee synchronizations! */
-	@unlink($xmlfile);
-	if (!copy($tempfile, $xmlfile) || 0) {
-		report_admin("couldn't copy ".$tempfile." to ".$xmlfile.".");
-		die("couldn't copy ".$tempfile." to ".$xmlfile.".");
+	
+	// Now acquire exclusive lock on a lock file for the atomic swap
+	$lockfile = $xmlfile . '.lock';
+	$lock_handle = fopen($lockfile, 'c'); // 'c' creates if not exists, doesn't truncate
+	if ($lock_handle === false) {
+		@unlink($tempfile);
+		die("Couldn't create lock file $lockfile.");
 	}
-	@unlink($tempfile);
+	
+	// Wait for exclusive lock (blocking)
+	if (!flock($lock_handle, LOCK_EX)) {
+		fclose($lock_handle);
+		@unlink($tempfile);
+		die("Couldn't acquire lock on $lockfile.");
+	}
+	
+	// We have the lock - perform atomic rename
+	// rename() is atomic on POSIX systems (Linux, macOS)
+	if (!@rename($tempfile, $xmlfile)) {
+		// Fallback for cross-filesystem or Windows: copy + unlink
+		// But do it safely within the lock
+		$success = @copy($tempfile, $xmlfile);
+		@unlink($tempfile);
+		if (!$success) {
+			flock($lock_handle, LOCK_UN);
+			fclose($lock_handle);
+			report_admin("couldn't write to ".$xmlfile.".");
+			die("couldn't write to ".$xmlfile.".");
+		}
+	}
+	
+	// Release the lock
+	flock($lock_handle, LOCK_UN);
+	fclose($lock_handle);
 
 	parse_container($parse_infoName, $p_each, $xmlfile, false);
 }
@@ -1402,6 +1456,80 @@ function haveAVisit() {
 			unset($visits['online'][$ip]);
 
 	save_container('visits', 	'Visit', 	'data/visits.xml');
+	
+	/*
+	 * Optional: Check for corruption after save (for debugging/monitoring).
+	 * To enable email alerts, set PHORMER_ADMIN_EMAIL in your config or
+	 * uncomment and modify the line below.
+	 */
+	// check_visits_corruption_and_alert('your-email@example.com');
+}
+
+/**
+ * Check for visits.xml corruption and optionally send an email alert.
+ * Call this after save_container() for visits to detect race condition corruption.
+ * 
+ * @param string|null $admin_email Email to send alerts to (null = no email)
+ * @param bool $auto_repair Whether to attempt auto-repair from backup
+ * @return bool True if corruption was detected
+ */
+function check_visits_corruption_and_alert($admin_email = null, $auto_repair = false) {
+	$xmlfile = 'data/visits.xml';
+	$content = @file_get_contents($xmlfile);
+	
+	if ($content === false) {
+		return false; // Can't read file
+	}
+	
+	// Quick check for the specific corruption pattern
+	$is_corrupted = (substr_count($content, '</Xmldata>') > 1) ||
+	                (substr_count($content, '<Xmldata>') > 1);
+	
+	// Also check for content after </Xmldata>
+	if (!$is_corrupted) {
+		$pos = strpos($content, '</Xmldata>');
+		if ($pos !== false) {
+			$after = trim(substr($content, $pos + strlen('</Xmldata>')));
+			$is_corrupted = (strlen($after) > 0);
+		}
+	}
+	
+	if ($is_corrupted) {
+		// Log the corruption
+		$log_entry = date('Y-m-d H:i:s') . " CORRUPTION in visits.xml\n";
+		$log_entry .= "IP: " . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'unknown') . "\n";
+		$log_entry .= "Content:\n$content\n---\n";
+		@file_put_contents('data/corruption_log.txt', $log_entry, FILE_APPEND | LOCK_EX);
+		
+		// Auto-repair from backup if enabled
+		if ($auto_repair && file_exists('data/visits.xml.bku')) {
+			@copy('data/visits.xml', 'data/visits_corrupted_' . time() . '.xml');
+			@copy('data/visits.xml.bku', 'data/visits.xml');
+		}
+		
+		// Send email alert (with throttling)
+		if ($admin_email) {
+			$throttle_file = 'data/last_corruption_alert.txt';
+			$throttle_hours = 12;
+			$should_send = true;
+			
+			if (file_exists($throttle_file)) {
+				$last = (int)file_get_contents($throttle_file);
+				$should_send = (time() - $last) > ($throttle_hours * 3600);
+			}
+			
+			if ($should_send) {
+				$subject = "[PHORMER] visits.xml corruption detected";
+				$body = "Corruption detected!\n\nContent:\n$content";
+				@mail($admin_email, $subject, $body);
+				@file_put_contents($throttle_file, time());
+			}
+		}
+		
+		return true;
+	}
+	
+	return false;
 }
 
 function visitsToday() {
