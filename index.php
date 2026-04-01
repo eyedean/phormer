@@ -527,14 +527,18 @@
 				$rating = explode(" ", $photos[$p]);
 				$hits = $rating[0];
 				$hits++;
-				@eval("@\$rate =".$rating[1].";");
-				if (($rate < 1) || ($rate > 5))
-					$rating[1] = "0/0";
-				if (isset($rating[2]))
-					$curLastVisit = $rating;
-
+				$rate = 0;
+				$raters = substr(strrchr($rating[1], '/'), 1);
+				if ($raters != "0")
+					@eval("@\$rate =".$rating[1].";");
+				$rate = round($rate, 2);
 				$photos[$p] = sprintf("%d %s %s", $hits, $rating[1], date("Y/m/d-G:i:s", GetTimeWithDiffer()));
 				save_container('photos', 'Photo', './data/photos.xml');
+				@eval("@\$rate =".$rating[1].";");
+				if (($rate < 1) || ($rate > 5))
+					$rating[1] = "0";
+				if (isset($rating[2]))
+					$curLastVisit = $rating;
 			}
 			$hr = "<center><div class=\"hr\"></div></center>";
 			$dd = "<span class=\"darkdot\">&#149;</span>";
